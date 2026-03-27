@@ -131,10 +131,6 @@ INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmrc7t.tfm
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
-INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
@@ -143,6 +139,10 @@ INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam5
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm
 OUTPUT conference_101719.pdf
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
@@ -163,10 +163,10 @@ INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmrc7t.vf
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
-INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/courier/pcrr7t.vf
-INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/courier/pcrr7t.vf
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmrc7t.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmr6.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmmi6.tfm

@@ -20,19 +20,19 @@
 \IEEEauthorblockA{\textit{dept. de Engenharia Informática} \\
 \textit{ISEP}\\
 Porto, Portugal \\
-12@isep.ipp.pt}
+1231651@isep.ipp.pt}
 \and
 \IEEEauthorblockN{2\textsuperscript{nd} Mariana Martins}
 \IEEEauthorblockA{\textit{dept. de Engenharia Informática} \\
 \textit{ISEP}\\
 Porto, Portugal \\
-12@isep.ipp.pt}
+1230679@isep.ipp.pt}
 \and
 \IEEEauthorblockN{3\textsuperscript{rd} Samara Miranda}
 \IEEEauthorblockA{\textit{dept. de Engenharia Informática} \\
 \textit{ISEP}\\
 Porto, Portugal \\
-12@isep.ipp.pt}
+1230432@isep.ipp.pt}
 }
 
 \maketitle
@@ -56,6 +56,15 @@ Paralelamente, a Iluminação Pública (IP) representa uma parcela significativa
  
 Surge assim uma oportunidade de sinergia: a \emph{potência libertada} pela eficiência na IP pode ser o catalisador para a infraestrutura de VE, evitando investimentos massivos em novos PTDs~\cite{b4}. Este trabalho, desenvolvido no âmbito da unidade curricular de Análise de Dados em Informática (ANADI), tem como objetivo analisar a relação entre a eficiência da iluminação pública e o nível de ocupação da rede elétrica de distribuição, construindo um modelo preditivo e avaliando a viabilidade técnica de integração de carregadores de veículos elétricos de 22~kW.
  
+\section{Objetivos}
+O presente trabalho persegue os seguintes objetivos específicos:
+\begin{itemize}
+    \item \textbf{Exploração e Tratamento:} Efetuar a limpeza e integração de dados de IP e PTD, tratando valores omissos e normalizando escalas de utilização.
+    \item \textbf{Caracterização Tecnológica:} Analisar o mix tecnológico da iluminação pública nacional e identificar o potencial de ganho energético por concelho.
+    \item \textbf{Diagnóstico de Saturação:} Caracterizar a ocupação dos transformadores por distrito e identificar pontos críticos de sobrecarga.
+    \item \textbf{Validação Estatística:} Testar se a rede possui folga significativa para a integração de cargas VE de 22~kW.
+    \item \textbf{Modelação Preditiva:} Desenvolver um modelo de regressão linear múltipla para estimar a ocupação da rede e validar a sua precisão em concelhos específicos (distrito de Aveiro).
+\end{itemize}
 
 \section{Metodologia e Dados}
 
@@ -131,14 +140,14 @@ A Tabela~\ref{tab:stats_concelhos} apresenta a estatística descritiva do nível
 \label{tab:stats_concelhos}
 \centering
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccccc}
 \hline
-\textbf{Concelho} & \textbf{Média} & \textbf{DP} & \textbf{Q1} & \textbf{Q3} & \textbf{Assim.} & \textbf{Kurt.} \\
+\textbf{Concelho} & \textbf{Média} & \textbf{DP} & \textbf{Q1} & \textbf{Mediana} & \textbf{Q3} & \textbf{Assim.} & \textbf{Kurt.} \\
 \hline
-Braga   & 0.5423 & 0.2401 & 0.39 & 0.79 & 0.4280  & $-$0.7116 \\
-Coimbra & 0.5406 & 0.2322 & 0.39 & 0.79 & 0.2258  & $-$0.7060 \\
-Faro    & 0.5549 & 0.2126 & 0.39 & 0.59 & 0.3009  & $-$0.4757 \\
-Évora   & 0.4546 & 0.2425 & 0.19 & 0.59 & 0.6680  & $-$0.4254 \\
+Braga   & 0.5423 & 0.2401 & 0.39 & 0.59 & 0.79 & 0.4280  & $-$0.7116 \\
+Coimbra & 0.5406 & 0.2322 & 0.39 & 0.59 & 0.79 & 0.2258  & $-$0.7060 \\
+Faro    & 0.5549 & 0.2126 & 0.39 & 0.59 & 0.59 & 0.3009  & $-$0.4757 \\
+Évora   & 0.4546 & 0.2425 & 0.19 & 0.39 & 0.59 & 0.6680  & $-$0.4254 \\
 \hline
 \end{tabular}
 \end{table}
@@ -311,12 +320,9 @@ Este trabalho analisou a relação entre a eficiência tecnológica da IP e a ca
  
 O modelo de regressão apresenta poder explicativo limitado ($R^2_{adj} = 6.4\%$), com multicolinearidade severa entre $X_1$ e $X_2$ e $X_3$ estatisticamente não significativo. Porto, Vila Nova de Gaia e Lisboa destacam-se como os municípios mais aptos para receber carregadores de 22~kW. Como trabalho futuro, propõe-se a inclusão de variáveis de consumo doméstico e industrial e a aplicação de modelos não lineares para melhorar o poder preditivo.
  
-\section*{Acknowledgment}
+\section*{Agradecimentos}
 
-The preferred spelling of the word ``acknowledgment'' in America is without 
-an ``e'' after the ``g''. Avoid the stilted expression ``one of us (R. B. 
-G.) thanks $\ldots$''. Instead, try ``R. B. G. thanks$\ldots$''. Put sponsor 
-acknowledgments in the unnumbered footnote on the first page.
+Este trabalho foi realizado com o apoio de ferramentas de Inteligência Artificial Generativa (Gemini 2.5 Flash) para auxílio na estruturação de código Python e refinamento do texto em LaTeX, seguindo as normas éticas de utilização de IA da instituição.
 
 
 \begin{thebibliography}{00}
