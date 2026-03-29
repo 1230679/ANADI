@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1774800484.28168 "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Conference-LaTeX-template_10-17-19/conference_101719.tex" "conference_101719.pdf" "conference_101719" 1774800486.45552 0
-  "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Conference-LaTeX-template_10-17-19/conference_101719.tex" 1774800481.72322 26852 735008ca4bed8940af3031462cc4db27 ""
+["pdflatex"] 1774802189.49862 "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Conference-LaTeX-template_10-17-19/conference_101719.tex" "conference_101719.pdf" "conference_101719" 1774802191.80712 0
+  "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Conference-LaTeX-template_10-17-19/conference_101719.tex" 1774802189.10726 27212 0fec546c04ab244fbf17a98a5060da3b ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -93,9 +93,11 @@
   "/usr/local/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1773927683 3636770 54ba53e30f16ac7c6667f2af95fbfedd ""
   "/usr/local/texlive/2026/texmf.cnf" 1772409725 577 648cd9f92f9c0eac486f4c71c85cfbbe ""
   "IEEEtran.cls" 1440636524 288304 b67b6fc6c2abb39f9b461923f5199343 ""
-  "boxplot_distritos.png" 1774703070.2364 153965 bab21f92c56eb0515ce7890bdb8041b4 ""
-  "conference_101719.aux" 1774800486.27666 6622 6e0b24b2717901cec4ec9290321cabab "pdflatex"
-  "conference_101719.tex" 1774800481.72322 26852 735008ca4bed8940af3031462cc4db27 ""
+  "boxplot_distritos.png" 1774801335.97654 125387 4e1f797606c885a466ba1d03610cddb0 ""
+  "capacidade-transformacao.png" 1774801933.79485 340632 bbf063201e117166ca387f9057a57ba0 ""
+  "conference_101719.aux" 1774802191.61298 7153 c88af9c6442324ed76f9ab8f91937995 "pdflatex"
+  "conference_101719.tex" 1774802189.10726 27212 0fec546c04ab244fbf17a98a5060da3b ""
+  "identificação-outliers.png" 1774801722.28643 112867 eba67de4bbffe65446218c9d015e131d ""
   "mix_tecnologico.png" 1774719539.19704 216083 1adecd9bcaf96607aea6890aef9cfbb6 ""
   "top10_ineficiente.png" 1774719722.81614 171291 6f3aa449bb70ba0219b4f80f608dde11 ""
   (generated)

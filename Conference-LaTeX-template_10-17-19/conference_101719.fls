@@ -190,6 +190,11 @@ INPUT ./top10_ineficiente.png
 INPUT ./top10_ineficiente.png
 INPUT ./top10_ineficiente.png
 INPUT ./top10_ineficiente.png
+INPUT ./identificação-outliers.png
+INPUT ./identificação-outliers.png
+INPUT ./identificação-outliers.png
+INPUT ./identificação-outliers.png
+INPUT ./identificação-outliers.png
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmr6.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmmi6.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmsy6.tfm
@@ -208,6 +213,11 @@ INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmr8c.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmr8c.vf
+INPUT ./capacidade-transformacao.png
+INPUT ./capacidade-transformacao.png
+INPUT ./capacidade-transformacao.png
+INPUT ./capacidade-transformacao.png
+INPUT ./capacidade-transformacao.png
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/vf/adobe/times/ptmri7t.vf
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
 INPUT conference_101719.aux

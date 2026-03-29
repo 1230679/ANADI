@@ -154,7 +154,15 @@ A análise do Top 10 municípios com maior potência instalada em tecnologias in
 
 \subsection{Valores Omissos e Outliers}
 
+
 A prevalência de dados omissos foi quantificada em 17\,402 registos (24,16\% do total de PTDs). O boxplot do nível de utilização individual mostra que 50\% dos PTDs operam entre 38\% e 58\% de capacidade. Contudo, identificaram-se outliers críticos com valores $\geq 100\%$, revelando transformadores em sobrecarga. Estes constituem estrangulamentos da rede onde a instalação de carregadores VE é tecnicamente inviável sem intervenção prévia de reforço.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{identificação-outliers.png}
+    \caption{Identificação de Outliers nos Níveis de Ocupação da Rede (PTDs).}
+    \label{fig:identificação-outliers}
+\end{figure}
 
 \subsection{Estatística Descritiva por Concelho}
 
@@ -315,8 +323,6 @@ Aveiro             & 0.4755 & 0.4958 & $-$0.0203 \\
 Castelo de Paiva   & 0.5432 & 0.5144 & $+$0.0288 \\
 Espinho            & 0.4434 & 0.5014 & $-$0.0580 \\
 Estarreja          & 0.5076 & 0.5074 & $+$0.0002 \\
-Ílhavo             & \textit{[ver notebook]} & \textit{[ver notebook]} & \textit{[ver notebook]} \\
-Mealhada           & \textit{[ver notebook]} & \textit{[ver notebook]} & \textit{[ver notebook]} \\
 \hline
 \end{tabular}
 \end{table}
@@ -368,12 +374,19 @@ Foi desenvolvido um dashboard interativo em \texttt{Streamlit} que integra os do
 
 Este trabalho analisou a relação entre a eficiência tecnológica da IP e a capacidade de carga dos PTDs em Portugal Continental, com foco na integração de VE. A análise exploratória revelou que 24.16\% dos registos PTD contêm dados omissos ou indeterminados. O t-test confirmou folga global de capacidade nos PTDs ($p \approx 0$). A correlação de Pearson ($r = 0.9111$) evidenciou uma relação linear muito forte entre a capacidade de transformação e a carga de IP. A ANOVA confirmou diferenças regionais significativas, com o Interior/Alentejo a apresentar ocupações mais baixas. O teste de duas amostras não revelou diferença significativa entre concelhos modernizados e ineficientes, sugerindo que a modernização da IP não é o fator dominante na carga dos PTDs.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{capacidade-transformacao.png}
+    \caption{Capacidade de Transformação da Rede com a Substituição de Lâmpadas Ineficientes por LED, comparada com a Carga Adicional de VE.}
+    \label{fig:capacidade_transformacao}
+\end{figure}
+
 O modelo de regressão apresenta poder explicativo limitado ($R^2_{adj} = 6.4\%$), com multicolinearidade severa entre $X_1$ e $X_2$ e $X_3$ estatisticamente não significativo. Porto, Vila Nova de Gaia e Lisboa destacam-se como os municípios mais aptos para receber carregadores de 22~kW. Como trabalho futuro, propõe-se a inclusão de variáveis de consumo doméstico e industrial e a aplicação de modelos não lineares para melhorar o poder preditivo.
+
 
 \section*{Agradecimentos}
 
 Este trabalho foi realizado com o apoio de ferramentas de Inteligência Artificial Generativa (Gemini 2.5 Flash) para auxílio na estruturação de código Python e refinamento do texto em \LaTeX, seguindo as normas éticas de utilização de IA da instituição.
-
 
 \begin{thebibliography}{00}
 \bibitem{b1} C. Heumann e M. Schomaker Shalabh, \textit{Introduction to Statistics and Data Analysis},
