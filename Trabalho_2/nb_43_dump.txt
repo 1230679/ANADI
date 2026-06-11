@@ -1,0 +1,815 @@
+=== CELL 51 [markdown] ===
+---
+## 4.3. Classificação - Previsão de utilizRede
+### 4.3.0 - Criar variável utilizRede
+
+=== CELL 52 [code] ===
+# Discretização de Util_Decimal em 3 classes por intervalos fixos
+# Justificação: Util_Decimal é uma variável discreta com apenas 6 valores
+# distintos (0.19, 0.39, 0.59, 0.79, 0.99, 1.00), inviabilizando uma
+# divisão por tercis equilibrada — o valor 0.39 representa ~30% do dataset
+# e tem de pertencer integralmente a uma classe.
+# Os limiares escolhidos têm significado operacional:
+#   baixo  (< 0.50): PTD com folga confortável
+#   medio  (0.50 – 0.75): PTD em zona de atenção
+#   alto   (> 0.75): PTD próximo dos limites operacionais (limiar típico e-REDES)
+
+df_clean = df_clean.copy()
+df_clean['utilizRede'] = pd.cut(
+    df_clean['Util_Decimal'],
+    bins=[-np.inf, 0.50, 0.75, np.inf],
+    labels=['baixo', 'medio', 'alto']
+)
+
+print('Distribuição:')
+dist = df_clean['utilizRede'].value_counts().sort_index()
+print(dist)
+print('\nProporções (%):')
+print((df_clean['utilizRede'].value_counts(normalize=True).sort_index() * 100).round(1))
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.bar(dist.index, dist.values, color=['seagreen', 'orange', 'coral'], edgecolor='white')
+for bar, val in zip(ax.patches, dist.values):
+    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 150,
+            f'{val:,}', ha='center', fontsize=10)
+ax.set_title('Distribuição de utilizRede (intervalos fixos com significado operacional)',
+             fontweight='bold')
+ax.set_ylabel('Nº de PTDs')
+ax.set_ylim(0, max(dist.values) * 1.12)
+plt.tight_layout()
+plt.savefig('fig_utilizRede.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 53 [markdown] ===
+#### Justificação da Discretização — utilizRede
+
+A variável `utilizRede` foi criada a partir de `Util_Decimal` com base em **intervalos fixos com significado operacional**.
+
+Foi inicialmente considerada uma discretização por tercis (`pd.qcut`), mas a análise revelou que `Util_Decimal` é uma variável **discreta** com apenas 6 valores distintos (0.19, 0.39, 0.59, 0.79, 0.99, 1.00). O valor 0.39 representa ~30% do dataset (20 892 PTDs), tornando qualquer divisão por quantis impossível de equilibrar — todos os PTDs com esse valor pertencem obrigatoriamente à mesma classe.
+
+Os limiares foram definidos com base no significado operacional no contexto da rede eléctrica:
+
+| Classe | Intervalo | Significado |
+|--------|-----------|-------------|
+| `baixo` | Util_Decimal ≤ 0.39 | PTD com folga confortável — viável para VE sem intervenção |
+| `medio` | 0.39 < Util_Decimal ≤ 0.59 | PTD em zona de atenção — viabilidade condicionada |
+| `alto`  | Util_Decimal > 0.59 | PTD próximo dos limites operacionais — risco de sobrecarga |
+
+A distribuição resultante é desbalanceada (51% / 25% / 24%), consequência direta da natureza discreta dos dados e não de uma escolha metodológica. Esta limitação é documentada em 4.3.6, onde se propõe SMOTE como estratégia de melhoria para treino dos classificadores.
+
+=== CELL 54 [code] ===
+# Features de classificação: idênticas às da regressão
+# Util_Decimal já foi excluída no pré-processamento (data leakage direto —
+# utilizRede é derivada de Util_Decimal)
+FEATURES_CLF = FEATURES.copy()
+X_clf = df_clean[FEATURES_CLF].values
+y_clf = df_clean['utilizRede'].astype(str).values
+X_clf_sc = StandardScaler().fit_transform(X_clf)
+kf10c = KFold(n_splits=10, shuffle=True, random_state=SEED)
+print(f'Features CLF ({len(FEATURES_CLF)}): shape={X_clf.shape}')
+print(f'Features: {FEATURES_CLF}')
+
+=== CELL 55 [markdown] ===
+#### Features de Classificação
+
+As features utilizadas na classificação são as **mesmas 16 features da regressão** — `Util_Decimal` já tinha sido excluída no pré-processamento (secção 4.1.3) por data leakage direto: `utilizRede` é derivada de `Util_Decimal`, pelo que incluí-la seria o modelo a prever a variável que gerou o próprio target.
+
+Duas versões das features são mantidas ao longo da secção 4.3:
+
+- **`X_clf`** — features na escala original, usada na Árvore de Decisão (invariante a escala)
+- **`X_clf_sc`** — features standardizadas (StandardScaler), usada em SVM e KNN, que são sensíveis à magnitude das variáveis
+
+O `KFold` com 10 splits, shuffle e `random_state=42` é definido aqui e reutilizado em **todos os modelos**, garantindo que os folds são exatamente os mesmos — requisito para que os testes estatísticos pareados da secção 4.3.4 sejam válidos.
+
+=== CELL 56 [markdown] ===
+### 4.3.1 - Modelos de Classificação
+
+=== CELL 57 [code] ===
+def eval_clf(model, Xd, yd, kf):
+    a,p,r,f = [],[],[],[]
+    for tr, te in kf.split(Xd):
+        model.fit(Xd[tr], yd[tr])
+        yp = model.predict(Xd[te])
+        a.append(accuracy_score(yd[te], yp))
+        p.append(precision_score(yd[te], yp, average='weighted', zero_division=0))
+        r.append(recall_score(yd[te], yp, average='weighted', zero_division=0))
+        f.append(f1_score(yd[te], yp, average='weighted', zero_division=0))
+    return {'Acc':(np.mean(a),np.std(a)), 'Prec':(np.mean(p),np.std(p)),
+            'Rec':(np.mean(r),np.std(r)), 'F1':(np.mean(f),np.std(f)), 'Acc_folds':a}
+
+print('Função de avaliação definida.')
+
+=== CELL 58 [markdown] ===
+#### Função de Avaliação — `eval_clf`
+
+A função `eval_clf` centraliza a avaliação por k-fold CV para todos os modelos de classificação, garantindo que o processo é **idêntico e comparável** entre modelos.
+
+Para cada fold do `KFold`:
+1. Treina o modelo no conjunto de treino (`Xd[tr]`, `yd[tr]`)
+2. Prediz no conjunto de teste (`Xd[te]`)
+3. Calcula as 4 métricas pedidas pelo enunciado (secção 4.3.2)
+
+Devolve um dicionário com média e desvio padrão de cada métrica, e a lista de Accuracy por fold (`Acc_folds`) necessária para os testes estatísticos pareados da secção 4.3.4.
+
+| Parâmetro | Descrição |
+|---|---|
+| `model` | Classificador sklearn (Árvore, SVM, KNN) |
+| `Xd` | Features — `X_clf` (escala original) ou `X_clf_sc` (standardizado) |
+| `yd` | Target — array de strings `['baixo', 'medio', 'alto']` |
+| `kf` | Objeto `KFold` partilhado por todos os modelos |
+
+`average='weighted'` pondera cada classe pelo número de amostras — adequado para classes desbalanceadas (51% / 25% / 24%). `zero_division=0` evita erros em folds onde uma classe minoritária não tem previsões.
+
+=== CELL 59 [code] ===
+# a) Árvore de Decisão
+print('=== a) Árvore de Decisão ===')
+dcr = {}
+for d in [3, 5, 7, 10, 15, None]:
+    r = eval_clf(DecisionTreeClassifier(max_depth=d, random_state=SEED), X_clf, y_clf, kf10c)
+    dcr[d] = r
+    print(f'  depth={str(d):4}: Acc={r["Acc"][0]:.4f} ± {r["Acc"][1]:.4f} | F1={r["F1"][0]:.4f}')
+best_dc = max(dcr, key=lambda d: dcr[d]['Acc'][0])
+res_dtc = dcr[best_dc]
+dt_clf = DecisionTreeClassifier(max_depth=best_dc, random_state=SEED).fit(X_clf, y_clf)
+print(f'-> Melhor depth: {best_dc} | Acc: {res_dtc["Acc"][0]:.4f}')
+
+=== CELL 60 [markdown] ===
+#### 4.3.1 — Árvore de Decisão
+
+A profundidade ótima é selecionada por **otimização manual** — testam-se 6 valores de `max_depth` ([3, 5, 7, 10, 15, None]) e seleciona-se o que maximiza a Accuracy média nos 10 folds.
+
+`None` (profundidade ilimitada) serve como referência de overfitting — a árvore memoriza o conjunto de treino mas tende a generalizar mal.
+
+Após selecção da profundidade ótima, o modelo é re-treinado em todo o dataset (`dt_clf`) exclusivamente para:
+- Visualização da estrutura da árvore (secção seguinte)
+- Cálculo da importância de features (secção 4.3.3)
+
+A avaliação de desempenho baseia-se nos resultados do k-fold (`res_dtc`), não no modelo treinado em todo o dataset.
+
+=== CELL 61 [code] ===
+fig, ax = plt.subplots(figsize=(22, 9))
+plot_tree(dt_clf, max_depth=3, feature_names=FEATURES_CLF,
+          class_names=dt_clf.classes_, filled=True, rounded=True, fontsize=7, ax=ax)
+ax.set_title(
+    f'Árvore de Decisão (max_depth={best_dc}, visualização limitada a 3 níveis)',
+    fontweight='bold'
+)
+plt.tight_layout()
+plt.savefig('fig_arvore_decisao.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 62 [code] ===
+# b) Rede Neuronal Classificação – 3 configurações com k-fold CV
+# Nota: para redes neuronais aplicamos k-fold treinando um modelo por fold.
+# As curvas de loss são plotadas a partir do melhor fold (fold representativo).
+print('=== b) Rede Neuronal Classificação (k-fold CV) ===')
+le_c = LabelEncoder()
+y_enc_all = le_c.fit_transform(y_clf)  # índices inteiros (globais)
+es_c = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=0)
+
+nn_cc = [
+    {'name': 'Config1_Shallow', 'units': [64, 32],          'drop': 0.2, 'lr': 1e-3},
+    {'name': 'Config2_Medium',  'units': [128, 64, 32],      'drop': 0.2, 'lr': 1e-3},
+    {'name': 'Config3_Deep',    'units': [256, 128, 64, 32], 'drop': 0.3, 'lr': 5e-4},
+]
+
+hist_clf, nn_cr = {}, {}
+
+for cfg in nn_cc:
+    fold_acc, fold_prec, fold_rec, fold_f1 = [], [], [], []
+    # Guardar histórico do último fold para curvas de loss
+    last_history = None
+    for tr_idx, te_idx in kf10c.split(X_clf_sc):
+        Xtr, Xte = X_clf_sc[tr_idx], X_clf_sc[te_idx]
+        ytr_int, yte_int = y_enc_all[tr_idx], y_enc_all[te_idx]
+        ytr_cat = to_categorical(ytr_int, 3)
+        yte_cat = to_categorical(yte_int, 3)
+        tf.random.set_seed(SEED)
+        inp = keras.Input(shape=(X_clf_sc.shape[1],))
+        x = inp
+        for u in cfg['units']:
+            x = layers.Dense(u, activation='relu')(x)
+            x = layers.Dropout(cfg['drop'])(x)
+        mc = keras.Model(inp, layers.Dense(3, activation='softmax')(x))
+        mc.compile(optimizer=keras.optimizers.Adam(cfg['lr']),
+                   loss='categorical_crossentropy', metrics=['accuracy'])
+        hc = mc.fit(Xtr, ytr_cat, validation_data=(Xte, yte_cat),
+                    epochs=150, batch_size=256, callbacks=[es_c], verbose=0)
+        last_history = hc.history
+        ypc = np.argmax(mc.predict(Xte, verbose=0), 1)
+        fold_acc.append(accuracy_score(yte_int, ypc))
+        fold_prec.append(precision_score(yte_int, ypc, average='weighted', zero_division=0))
+        fold_rec.append(recall_score(yte_int, ypc, average='weighted', zero_division=0))
+        fold_f1.append(f1_score(yte_int, ypc, average='weighted', zero_division=0))
+    hist_clf[cfg['name']] = last_history
+    nn_cr[cfg['name']] = {
+        'Acc':  (np.mean(fold_acc),  np.std(fold_acc)),
+        'Prec': (np.mean(fold_prec), np.std(fold_prec)),
+        'Rec':  (np.mean(fold_rec),  np.std(fold_rec)),
+        'F1':   (np.mean(fold_f1),   np.std(fold_f1)),
+        'Acc_folds': fold_acc,
+    }
+    r = nn_cr[cfg['name']]
+    print(f"  {cfg['name']:22}: Acc={r['Acc'][0]:.4f}±{r['Acc'][1]:.4f} | F1={r['F1'][0]:.4f}±{r['F1'][1]:.4f}")
+
+best_nnc = max(nn_cr, key=lambda k: nn_cr[k]['Acc'][0])
+print(f'-> Melhor NN: {best_nnc}')
+
+
+=== CELL 63 [markdown] ===
+#### 4.3.1 — Rede Neuronal (Classificação)
+
+A rede neuronal de classificação usa **10-fold CV**, treinando um modelo novo por fold — ao contrário dos modelos sklearn, o Keras não tem suporte direto a k-fold, pelo que cada fold implica construir e inicializar a rede de raiz para evitar contaminação de pesos entre folds.
+
+**Preparação do target:** as classes string são convertidas para inteiros via `LabelEncoder` e depois para one-hot encoding via `to_categorical` — formato exigido pela função de perda `categorical_crossentropy` com ativação `softmax` na camada de saída.
+
+**Três configurações testadas**, variando profundidade, largura e learning rate:
+
+| Config | Camadas ocultas | Neurónios | Dropout | Learning Rate |
+|--------|----------------|-----------|---------|---------------|
+| Shallow | 2 | [64, 32] | 20% | 1e-3 |
+| Medium | 3 | [128, 64, 32] | 20% | 1e-3 |
+| Deep | 4 | [256, 128, 64, 32] | 30% | 5e-4 |
+
+**Curvas de loss:** plotadas a partir do último fold de cada configuração — fold representativo do comportamento geral. A análise permite diagnosticar overfitting (`val_loss` > `train_loss` com gap crescente) ou underfitting (ambas as curvas com loss elevada).
+
+---
+
+**Learning Rate**
+
+A learning rate controla o tamanho do passo do gradiente descendente em cada atualização de pesos. Um valor demasiado alto faz o modelo "saltar" sobre mínimos locais (overshooting); um valor demasiado baixo torna a convergência muito lenta ou faz o modelo ficar preso em mínimos locais subótimos.
+
+| Config | Learning Rate | Efeito observado |
+|--------|--------------|-----------------|
+| Shallow | 1e-3 | Convergência estável — rede simples tolera lr mais alta |
+| Medium | 1e-3 | Convergência mais ruidosa devido ao dropout |
+| Deep | 5e-4 | Convergência mais lenta mas mais estável — necessária em redes profundas para evitar overshooting |
+
+A Config3 usa lr=5e-4 (metade das restantes) porque redes mais profundas têm superfícies de loss mais complexas — passos de gradiente mais pequenos permitem navegar essas superfícies com maior precisão.
+
+---
+
+**Early Stopping**
+
+O early stopping monitoriza `val_loss` em cada época e interrompe o treino se não houver melhoria durante `patience` épocas consecutivas, restaurando os pesos do melhor epoch (`restore_best_weights=True`).
+
+O comportamento foi distinto entre configurações:
+
+- **Config1 (Shallow, ~79 épocas)**: rede simples sem dropout — `val_loss` desce gradualmente e o early stopping intervém apenas quando a convergência está genuinamente completa. Comportamento esperado e saudável.
+- **Config2 e Config3 (~10 épocas com patience=10 / resolvido com patience=20)**: o dropout desativa neurónios aleatoriamente em cada batch, introduzindo oscilações na `val_loss`. Com `patience=10`, o early stopping interrompia o treino prematuramente — antes de a rede convergir de facto. Aumentando para `patience=20` as redes têm margem suficiente para superar as oscilações.
+
+---
+
+**Resultados**
+
+| Config | Accuracy | F1 |
+|--------|----------|----|
+| Shallow | 0.6907 ± 0.0192 | 0.6600 ± 0.0366 |
+| Medium | 0.6882 ± 0.0056 | 0.6544 ± 0.0085 |
+| Deep | 0.6754 ± 0.0074 | 0.6192 ± 0.0135 |
+
+A **Config1 (Shallow)** é a melhor configuração, superando as redes mais profundas. Este resultado sugere que a complexidade do problema não justifica arquiteturas profundas — as relações entre as features e `utilizRede` são suficientemente capturadas por 2 camadas ocultas [64, 32].
+
+A Config3 (Deep) apresenta o pior desempenho (Acc=0.6754), indicando que o dropout elevado (30%) combinado com 4 camadas constitui regularização excessiva para este dataset. O desvio padrão elevado da Config1 (±0.0192 vs ±0.006 das restantes) reflete maior variabilidade entre folds — esperado numa rede sem dropout, mais sensível à composição de cada fold.
+
+A melhor configuração é selecionada automaticamente por Accuracy média nos 10 folds: **Config1_Shallow**.
+
+=== CELL 64 [code] ===
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+for i, cfg in enumerate(nn_cc):
+    h = hist_clf[cfg['name']]
+    axes[i].plot(h['loss'], color='steelblue', label='Train')
+    axes[i].plot(h['val_loss'], color='coral', label='Val')
+    axes[i].set_title(cfg['name'].replace('_',' '), fontweight='bold', fontsize=9)
+    axes[i].set_xlabel('Época')
+    axes[i].set_ylabel('Cross-Entropy Loss')
+    axes[i].legend(fontsize=8)
+plt.suptitle('Curvas de Loss – NN Classificação (Config3: lr=5e-4, dropout=0.3)', fontsize=11)
+plt.tight_layout()
+plt.savefig('fig_nn_loss_clf.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 65 [markdown] ===
+#### Interpretação das Curvas de Loss — NN Classificação
+
+As três configurações apresentam um padrão comum: `val_loss` (laranja) desce mais rapidamente que `train_loss` (azul) nas primeiras épocas, convergindo depois para valores próximos (~0.70). Este comportamento é **saudável** — indica que os modelos generalizam bem e não há sinais de overfitting severo.
+
+**Config1 (Shallow)** — convergência mais lenta (~79 épocas) mas estável. O gap entre treino e validação é consistente e pequeno ao longo de todo o treino, confirmando que a rede simples sem dropout aprende de forma gradual e controlada. O early stopping intervém apenas quando a convergência está genuinamente completa.
+
+**Config2 (Medium)** — convergência mais rápida (~20 épocas). O gap treino/validação é ligeiramente maior que na Config1, reflexo do dropout 20% que introduz ruído no treino. A `val_loss` estabiliza em valores muito próximos da Config1 (~0.70), o que explica a Accuracy semelhante (0.6882 vs 0.6907).
+
+**Config3 (Deep)** — comportamento idêntico à Config2 em termos de forma das curvas, mas com `train_loss` inicial mais elevada (~0.90) devido ao dropout 30% mais agressivo. A convergência é ligeiramente mais lenta que a Config2, consistente com a learning rate conservadora (5e-4). Apesar da maior regularização, a `val_loss` final é semelhante às outras configurações — o que sugere que a capacidade adicional das 4 camadas não traz benefício real para este problema.
+
+**Conclusão geral:** as três redes convergem para `val_loss` ≈ 0.70, independentemente da complexidade. Este plateau sugere que o limite informativo das features disponíveis foi atingido — aumentar a complexidade da rede não melhora o desempenho porque a informação nos dados não é suficiente para discriminar melhor as três classes.
+
+=== CELL 66 [code] ===
+# c) SVM
+print('=== c) SVM Classificação (subsample n=10000) ===')
+rng = np.random.default_rng(SEED)
+isc = rng.choice(len(X_clf_sc), 10000, replace=False)
+
+# KFold separado para o subsample — kf10c foi criado para n=68963
+kf_svm = KFold(n_splits=10, shuffle=True, random_state=SEED)
+
+svc_r = {}
+for k in ['linear', 'rbf', 'poly']:
+    r = eval_clf(SVC(kernel=k, C=1.0, random_state=SEED),
+                 X_clf_sc[isc], y_clf[isc], kf_svm)
+    svc_r[k] = r
+    print(f'  kernel={k:6}: Acc={r["Acc"][0]:.4f} ± {r["Acc"][1]:.4f} | F1={r["F1"][0]:.4f}')
+best_ks = max(svc_r, key=lambda k: svc_r[k]['Acc'][0])
+res_svc = svc_r[best_ks]
+print(f'-> Melhor kernel: {best_ks}')
+
+=== CELL 67 [markdown] ===
+#### 4.3.1 — SVM (Classificação)
+
+O SVM foi treinado num subsample de **n=10 000** registos (14,5% do dataset) por limitações computacionais — o `SVC` tem complexidade O(n²) a O(n³) no treino, tornando inviável a utilização do dataset completo (68 963 registos). O subsample foi selecionado aleatoriamente com seed fixo (SEED=42) para garantir reprodutibilidade.
+
+Foram testados 3 kernels com `C=1.0` fixo:
+
+| Kernel | Accuracy | F1 |
+|--------|----------|----|
+| linear | 0.6757 ± 0.0098 | 0.6368 |
+| **rbf** | **0.6964 ± 0.0134** | **0.6768** |
+| poly | 0.6088 ± 0.0167 | 0.5429 |
+
+O **kernel rbf** é o melhor (Acc=0.6964), o que é esperado — o rbf (Radial Basis Function) captura relações não-lineares entre features, mais adequado para um problema onde as fronteiras de decisão entre classes de ocupação da rede não são linearmente separáveis.
+
+O kernel **poly** apresenta o pior desempenho (Acc=0.6088), sugerindo que fronteiras polinomiais não se adequam à estrutura dos dados.
+
+O kernel **linear** tem desempenho intermédio (Acc=0.6757) e desvio padrão baixo (±0.0098) — estável mas limitado pela assunção de separabilidade linear.
+
+**Nota:** os resultados do SVM podem estar subestimados face ao dataset completo — um subsample de 14,5% pode não capturar toda a variabilidade da distribuição, especialmente nas classes minoritárias (medio: 25%, alto: 24%).
+
+=== CELL 68 [code] ===
+# d) KNN
+print('=== d) KNN – Otimização de K ===')
+knn_r = {}
+for k in [1, 3, 5, 7, 10, 15, 20, 30, 50]:
+    r = eval_clf(KNeighborsClassifier(n_neighbors=k), X_clf_sc, y_clf, kf10c)
+    knn_r[k] = r
+    print(f'  k={k:2}: Acc={r["Acc"][0]:.4f} ± {r["Acc"][1]:.4f} | F1={r["F1"][0]:.4f}')
+best_knn = max(knn_r, key=lambda k: knn_r[k]['Acc'][0])
+res_knn = knn_r[best_knn]
+print(f'-> Melhor K: {best_knn}')
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ks = list(knn_r.keys())
+ax.plot(ks, [knn_r[k]['Acc'][0] for k in ks], 'o-', color='steelblue')
+ax.axvline(best_knn, color='red', ls='--', label=f'K={best_knn}')
+ax.set_xlabel('K')
+ax.set_ylabel('Accuracy')
+ax.set_title('KNN – Otimização de K', fontweight='bold')
+ax.legend()
+plt.tight_layout()
+plt.savefig('fig_knn_k.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 69 [markdown] ===
+#### 4.3.1 — KNN (K-Vizinhos-Mais-Próximos)
+
+O KNN é um algoritmo de classificação baseado numa ideia simples: **um PTD é classificado com base nos K PTDs mais semelhantes no conjunto de treino**. Não produz um modelo explícito — a classificação é feita em tempo de predição, calculando distâncias para todos os exemplos de treino.
+
+**Como funciona:**
+1. Para cada PTD a classificar, calcula a distância euclidiana até todos os PTDs do conjunto de treino
+2. Seleciona os K mais próximos (os "vizinhos")
+3. A classe atribuída é a **maioritária** entre esses K vizinhos
+
+As features standardizadas (`X_clf_sc`) são obrigatórias — distâncias euclidianas não standardizadas seriam dominadas por variáveis com maior magnitude (ex: `Cap_PTD_kVA` em centenas de kVA vs `LED_Ratio` entre 0 e 1).
+
+O parâmetro K é otimizado por **loop manual** sobre os valores [1, 3, 5, 7, 10, 15, 20, 30, 50], selecionando o que maximiza a Accuracy média nos 10 folds. O mesmo `kf10c` é partilhado com os restantes modelos, garantindo folds idênticos e permitindo testes estatísticos pareados válidos na secção 4.3.4.
+
+---
+
+**Resultados**
+
+O **K=15** é o valor ótimo (Acc=0.6734), confirmando o padrão esperado de bias-variance tradeoff:
+
+- **K=1** apresenta o pior desempenho (Acc=0.6042) — o modelo classifica cada PTD apenas pelo vizinho mais próximo, muito sensível a outliers e ruído. Overfitting clássico.
+- **K=3 a K=15**: Accuracy cresce consistentemente com K — mais vizinhos estabilizam a fronteira de decisão e tornam a classificação mais robusta.
+- **K=15 a K=50**: Accuracy decresce ligeiramente — K demasiado grande introduz viés, incluindo vizinhos de classes diferentes que distorcem a classificação. Underfitting progressivo.
+
+O plateau entre K=15 e K=20 (0.6734 vs 0.6724) é estreito — o modelo não é muito sensível à escolha exata de K nesta região. O desvio padrão ligeiramente mais alto em K=15 (±0.0064) face a K=5 (±0.0030) é normal — K maiores são mais estáveis em média mas mais variáveis entre folds devido ao maior raio de vizinhança.
+
+**Limitações:** o KNN não produz um modelo interpretável (sem coeficientes nem regras explícitas) e é lento na predição — para cada novo PTD calcula distâncias para todos os 68 963 PTDs de treino.
+
+=== CELL 70 [markdown] ===
+### 4.3.2 – Métricas (média ± desvio padrão)
+
+=== CELL 71 [code] ===
+# 4.3.2 – Métricas globais (média ± desvio padrão) e por classe
+def fmt(m, s): return f'{m:.4f} ± {s:.4f}'
+rnn = nn_cr[best_nnc]
+
+# --- Tabela de métricas globais (10-fold CV, weighted) ---
+results_clf = pd.DataFrame([
+    {'Modelo': f'Árvore (d={best_dc})',
+     'Accuracy': fmt(*res_dtc['Acc']), 'Precision': fmt(*res_dtc['Prec']),
+     'Recall': fmt(*res_dtc['Rec']),   'F1': fmt(*res_dtc['F1'])},
+    {'Modelo': f'NN ({best_nnc})',
+     'Accuracy': fmt(*rnn['Acc']),     'Precision': fmt(*rnn['Prec']),
+     'Recall': fmt(*rnn['Rec']),       'F1': fmt(*rnn['F1'])},
+    {'Modelo': f'SVM ({best_ks})',
+     'Accuracy': fmt(*res_svc['Acc']), 'Precision': fmt(*res_svc['Prec']),
+     'Recall': fmt(*res_svc['Rec']),   'F1': fmt(*res_svc['F1'])},
+    {'Modelo': f'KNN (k={best_knn})',
+     'Accuracy': fmt(*res_knn['Acc']), 'Precision': fmt(*res_knn['Prec']),
+     'Recall': fmt(*res_knn['Rec']),   'F1': fmt(*res_knn['F1'])},
+])
+print('=== Métricas Globais (10-fold CV, weighted) ===')
+print(results_clf.to_string(index=False))
+
+# --- Métricas por classe via cross_val_predict (10-fold, consistente com eval_clf) ---
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import classification_report
+
+def per_class_report(model, X, y_str, name, cv=10):
+    """Métricas por classe via cross_val_predict — mesmo nº de folds que eval_clf."""
+    y_pred = cross_val_predict(model, X, y_str, cv=cv)
+    print(f'\n--- {name} (cross_val_predict {cv}-fold, por classe) ---')
+    print(classification_report(y_str, y_pred, target_names=np.unique(y_str)))
+
+per_class_report(
+    DecisionTreeClassifier(max_depth=best_dc, random_state=SEED),
+    X_clf, y_clf, f'Árvore (d={best_dc})')
+
+per_class_report(
+    SVC(kernel=best_ks, C=1.0, random_state=SEED),
+    X_clf_sc[isc], y_clf[isc],
+    f'SVM ({best_ks}) [subsample n=10000]')
+
+per_class_report(
+    KNeighborsClassifier(n_neighbors=best_knn),
+    X_clf_sc, y_clf, f'KNN (k={best_knn})')
+
+# --- NN: report por classe num split representativo (80/20) ---
+# cross_val_predict não é compatível com Keras — usamos um split representativo
+print(f'\n--- NN ({best_nnc}) — report por classe (split 80/20 representativo) ---')
+cfg_best = next(c for c in nn_cc if c['name'] == best_nnc)
+es_report = EarlyStopping(monitor='val_loss', patience=20,
+                          restore_best_weights=True, verbose=0)
+tf.random.set_seed(SEED)
+Xtr2, Xte2, ytr2, yte2 = train_test_split(
+    X_clf_sc, y_enc_all, test_size=0.2, random_state=SEED)
+ytr2_cat = to_categorical(ytr2, 3)
+yte2_cat = to_categorical(yte2, 3)
+
+inp2 = keras.Input(shape=(X_clf_sc.shape[1],))
+x2 = inp2
+for u in cfg_best['units']:
+    x2 = layers.Dense(u, activation='relu')(x2)
+    x2 = layers.Dropout(cfg_best['drop'])(x2)
+mc2 = keras.Model(inp2, layers.Dense(3, activation='softmax')(x2))
+mc2.compile(optimizer=keras.optimizers.Adam(cfg_best['lr']),
+            loss='categorical_crossentropy', metrics=['accuracy'])
+mc2.fit(Xtr2, ytr2_cat, validation_data=(Xte2, yte2_cat),
+        epochs=150, batch_size=256, callbacks=[es_report], verbose=0)
+
+yp_nn = np.argmax(mc2.predict(Xte2, verbose=0), 1)
+print(classification_report(yte2, yp_nn, target_names=le_c.classes_))
+print('Nota: report por classe da NN baseado num split representativo (80/20),')
+print('não em CV — cross_val_predict não é compatível com Keras.')
+
+=== CELL 72 [markdown] ===
+#### 4.3.2 — Métricas Globais e Por Classe
+
+**O que mede cada métrica**
+
+- **Accuracy**: proporção de PTDs corretamente classificados no total — métrica geral mas sensível ao desequilíbrio de classes.
+- **Precision (weighted)**: de todos os PTDs previstos como uma classe, quantos são realmente dessa classe. Penaliza falsos positivos.
+- **Recall (weighted)**: de todos os PTDs realmente de uma classe, quantos foram corretamente identificados. Penaliza falsos negativos.
+- **F1 (weighted)**: média harmónica de Precision e Recall — métrica de equilíbrio, mais informativa que a Accuracy quando as classes são desbalanceadas.
+
+O sufixo **weighted** significa que cada métrica é ponderada pelo número de amostras de cada classe — adequado para o dataset desbalanceado (51% / 25% / 24%).
+
+A **média ± desvio padrão** resulta dos 10 folds do k-fold CV — o desvio padrão mede a estabilidade do modelo entre folds: valores baixos indicam um modelo consistente independentemente da partição dos dados.
+
+---
+
+**Métricas Globais (10-fold CV, weighted)**
+
+| Modelo | Accuracy | Precision | Recall | F1 |
+|--------|----------|-----------|--------|----|
+| Árvore (d=7) | 0.6992 ± 0.0041 | 0.6895 ± 0.0038 | 0.6992 ± 0.0041 | 0.6912 ± 0.0044 |
+| SVM (rbf) | 0.6964 ± 0.0134 | 0.6788 ± 0.0130 | 0.6964 ± 0.0134 | 0.6768 ± 0.0146 |
+| NN (Shallow) | 0.6907 ± 0.0192 | 0.6692 ± 0.0274 | 0.6907 ± 0.0192 | 0.6600 ± 0.0366 |
+| KNN (k=15) | 0.6734 ± 0.0064 | 0.6525 ± 0.0069 | 0.6734 ± 0.0064 | 0.6573 ± 0.0068 |
+
+A **Árvore de Decisão (d=7)** apresenta o melhor desempenho global (Acc=0.6992, F1=0.6912) e o desvio padrão mais baixo (±0.0041) — o modelo mais estável e consistente entre folds. O **KNN** é o pior modelo em todas as métricas.
+
+O **SVM (rbf)** é o segundo melhor (Acc=0.6964) mas com desvio padrão mais alto (±0.0134) e treinado apenas num subsample de 10 000 registos — o desempenho real no dataset completo pode ser superior.
+
+A **NN** apresenta o desvio padrão mais alto em todas as métricas (ex: F1 ±0.0366), reflexo da ausência de dropout na Config1_Shallow — mais sensível à composição de cada fold.
+
+---
+
+**Métricas Por Classe**
+
+As métricas por classe revelam o comportamento interno de cada modelo, que as métricas globais weighted mascaram:
+
+| Classe | Precision | Recall | F1 | Interpretação |
+|--------|-----------|--------|----|---------------|
+| **baixo** | ~0.74–0.77 | ~0.87–0.90 | ~0.80–0.82 | Melhor classe — maioritária, bem aprendida |
+| **alto** | ~0.63–0.74 | ~0.60–0.66 | ~0.61–0.69 | Desempenho intermédio |
+| **medio** | ~0.47–0.55 | ~0.33–0.43 | ~0.39–0.48 | Pior classe — fronteiras difusas |
+
+**Porquê `baixo` é sempre a melhor classe?**
+É a classe maioritária (51% do dataset) — os modelos têm mais exemplos para aprender os seus padrões. O recall elevado (~0.87–0.90) indica que quase todos os PTDs realmente `baixo` são corretamente identificados.
+
+**Porquê `medio` é sempre a pior classe?**
+A classe `medio` (25% do dataset) situa-se entre `baixo` e `alto` — os seus PTDs partilham características com ambas as outras classes, tornando as fronteiras de decisão difusas. O recall de 0.33–0.43 indica que mais de metade dos PTDs realmente `medio` são mal classificados. Este é o principal ponto de melhoria para trabalho futuro — estratégias como SMOTE ou features adicionais poderiam melhorar a discriminação desta classe.
+
+**Porquê Precision > Recall em `alto` e o inverso em `baixo`?**
+- `baixo`: recall alto, precision moderada — os modelos tendem a sobre-classificar PTDs como `baixo` (viés para a classe maioritária), capturando bem os casos reais mas gerando falsos positivos.
+- `alto`: precision mais alta, recall mais baixo — os modelos são conservadores a atribuir a classe `alto`, errando menos quando a atribuem mas falhando alguns casos reais.
+
+**Nota metodológica:** as métricas por classe da NN são baseadas num split representativo 80/20 — `cross_val_predict` não é compatível com Keras. Os valores são consistentes com as métricas globais obtidas por 10-fold CV (Acc=0.6907 no CV vs 0.71 no split), confirmando que o split é representativo do comportamento geral do modelo.
+
+=== CELL 73 [markdown] ===
+### 4.3.3 - Importância de features e comparação com correlações da 4.1
+
+=== CELL 74 [code] ===
+# 4.3.3 – Importância de features e matriz de confusão
+
+fi_clf = pd.DataFrame({
+    'Feature': FEATURES_CLF,
+    'Importance': dt_clf.feature_importances_
+}).sort_values('Importance', ascending=True)
+
+fig, ax = plt.subplots(figsize=(9, 7))
+ax.barh(fi_clf['Feature'], fi_clf['Importance'], color='steelblue', alpha=0.85)
+ax.set_xlabel('Importância (Gini)')
+ax.set_title('Importância de Features – Árvore de Decisão', fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_feat_imp_clf.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print('Top 5 features (classificação):')
+print(fi_clf.tail(5)[['Feature', 'Importance']]
+      .sort_values('Importance', ascending=False)
+      .to_string(index=False))
+
+# --- Matriz de confusão via cross_val_predict (consistente com k-fold) ---
+# Usar um modelo separado para não sobrescrever dt_clf
+dt_cm = DecisionTreeClassifier(max_depth=best_dc, random_state=SEED)
+y_pred_cm = cross_val_predict(dt_cm, X_clf, y_clf, cv=10)
+
+fig, ax = plt.subplots(figsize=(7, 6))
+ConfusionMatrixDisplay.from_predictions(
+    y_clf, y_pred_cm, ax=ax,
+    display_labels=np.unique(y_clf), colorbar=False)
+ax.set_title(f'Matriz de Confusão – Árvore de Decisão (d={best_dc}, 10-fold CV)',
+             fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_confusion_matrix.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print(classification_report(y_clf, y_pred_cm, target_names=np.unique(y_clf)))
+
+=== CELL 75 [markdown] ===
+#### 4.3.3 — Importância de Features e Matriz de Confusão
+
+**Importância de Features — Árvore de Decisão**
+
+| Feature | Importância |
+|---------|------------|
+| Cap_per_Cliente | 0.7014 |
+| PContratada_per_Cliente | 0.2217 |
+| Cap_PTD_kVA | 0.0416 |
+| Pot_Contratada_kVA | 0.0147 |
+| N_Clientes | 0.0087 |
+
+A importância de features mede a **redução média de impureza de Gini** atribuída a cada variável nos splits da árvore. As restantes features têm importância próxima de zero e não contribuem para a classificação.
+
+**`Cap_per_Cliente` domina com 70%** — a capacidade do PTD por cliente é o preditor mais discriminante do nível de ocupação da rede. Isto faz sentido: um PTD com muita capacidade por cliente tem folga elevada (`baixo`); um PTD sobrecarregado por cliente tende a `alto`.
+
+**`PContratada_per_Cliente` com 22%** — a potência contratada por cliente complementa `Cap_per_Cliente`, capturando o perfil de consumo real (não apenas a capacidade instalada).
+
+**As restantes 14 features contribuem apenas com 8% combinadas** — `Cap_PTD_kVA`, `Pot_Contratada_kVA` e `N_Clientes` têm importância residual. Todas as variáveis de iluminação pública (`P_IP_Total`, `Rate_Ineficiencia`, `Ganho_LED_PTD`, etc.) têm importância ≈ 0, confirmando que não têm poder discriminante para o nível de ocupação da rede ao nível do PTD individual.
+
+**Comparação com correlações da secção 4.1:**
+A matriz de correlação de Pearson mostrava `Cap_PTD_kVA` com correlação r=0.92 com `PFolga_PTD`. No entanto, a árvore atribui apenas 4% de importância a `Cap_PTD_kVA` para classificar `utilizRede`. Isto explica-se porque `utilizRede` é derivada de `Util_Decimal` (não de `PFolga_PTD`) — e `Util_Decimal = PFolga_PTD / (Cap_PTD_kVA × 0.92)`, ou seja, a capacidade do PTD cancela-se no rácio. O que discrimina as classes é a **capacidade por cliente**, não a capacidade absoluta.
+
+---
+
+**Matriz de Confusão (10-fold CV)**
+
+|  | Previsto: alto | Previsto: baixo | Previsto: medio |
+|--|---------------|----------------|----------------|
+| **Real: alto** | 10 374 ✓ | 2 743 | 3 441 |
+| **Real: baixo** | 877 | 30 726 ✓ | 3 627 |
+| **Real: medio** | 3 496 | 6 565 | 7 114 ✓ |
+
+**Classe `baixo`** — melhor desempenho (recall=0.87): 30 726 de 35 230 PTDs corretamente classificados. Os 3 627 erros vão maioritariamente para `medio` — PTDs na fronteira entre carga baixa e média.
+
+**Classe `alto`** — desempenho intermédio (recall=0.63): 10 374 de 16 558 corretamente classificados. Os erros dividem-se entre `medio` (3 441) e `baixo` (2 743) — o modelo confunde PTDs de alta ocupação com as outras classes quando as features per-cliente não são suficientemente discriminantes.
+
+**Classe `medio`** — pior desempenho (recall=0.41): apenas 7 114 de 17 175 corretamente classificados. A maioria dos erros vai para `baixo` (6 565) — o modelo tende a classificar PTDs realmente `medio` como `baixo`, reflexo do viés para a classe maioritária. Esta é a principal limitação do classificador.
+
+**Conclusão:** o modelo é eficaz para identificar PTDs de baixa ocupação (candidatos prioritários para instalação de VE) mas falha em discriminar os níveis intermédios — limitação relevante do ponto de vista operacional, uma vez que PTDs `medio` mal classificados como `baixo` podem receber carregadores VE sem capacidade suficiente.
+
+=== CELL 76 [markdown] ===
+### 4.3.4 - Teste Estatístico (α = 5%)
+
+=== CELL 77 [code] ===
+# 4.3.4 - Teste Estatístico entre os 2 Melhores Modelos de Classificação (α=5%)
+# Nota: o SVM foi avaliado num subsample (n=10000) com kf_svm separado —
+# os seus Acc_folds não são comparáveis em teste pareado com os restantes modelos
+# (folds de populações diferentes). O SVM é excluído da comparação pareada.
+
+clf_scores_paired = {
+    f'Árvore (d={best_dc})': res_dtc['Acc_folds'],
+    f'NN ({best_nnc})':       nn_cr[best_nnc]['Acc_folds'],
+    f'KNN (k={best_knn})':   res_knn['Acc_folds'],
+}
+sorted_clf = sorted(clf_scores_paired.items(), key=lambda x: np.mean(x[1]), reverse=True)
+top2_name_1, top2_folds_1 = sorted_clf[0]
+top2_name_2, top2_folds_2 = sorted_clf[1]
+print(f'Comparando: {top2_name_1} (Acc={np.mean(top2_folds_1):.4f})  vs  {top2_name_2} (Acc={np.mean(top2_folds_2):.4f})')
+print(f'(SVM excluído — avaliado em subsample com folds distintos)')
+
+f1_arr = np.array(top2_folds_1)
+f2_arr = np.array(top2_folds_2)
+diffs_clf = f1_arr - f2_arr
+
+_, p_sw_clf = shapiro(diffs_clf)
+print(f'\nShapiro-Wilk (diferenças Accuracy): p={p_sw_clf:.4f}')
+if p_sw_clf > 0.05:
+    stat_c, p_c = ttest_rel(f1_arr, f2_arr)
+    tn_c = 't-test pareado'
+else:
+    stat_c, p_c = wilcoxon(f1_arr, f2_arr)
+    tn_c = 'Wilcoxon signed-rank'
+
+print(f'{tn_c}: stat={stat_c:.4f}, p={p_c:.4f}')
+if p_c < 0.05:
+    w_c = top2_name_1 if f1_arr.mean() > f2_arr.mean() else top2_name_2
+    print(f'-> Diferença significativa (p<0.05). Melhor modelo: {w_c}')
+else:
+    print('-> Sem diferença significativa (p>=0.05). Os modelos têm desempenho equivalente.')
+
+=== CELL 78 [markdown] ===
+#### Resultados — Teste Estatístico (α = 5%)
+
+Os dois melhores modelos comparados são a **Árvore de Decisão (d=7)** (Acc=0.6992) e a **NN Config1_Shallow** (Acc=0.6907), com uma diferença absoluta de apenas 0.0085 em Accuracy.
+
+**Procedimento:**
+
+1. **Shapiro-Wilk** nas diferenças de Accuracy entre os 10 folds: p=0.1125 > 0.05 → as diferenças seguem uma distribuição normal → aplica-se o **t-test pareado**.
+2. **t-test pareado**: stat=1.3099, p=0.2227 > 0.05 → **não existe diferença estatisticamente significativa** entre os dois modelos ao nível de significância de 5%.
+
+**Interpretação:**
+
+Apesar de a Árvore de Decisão apresentar Accuracy média superior (0.6992 vs 0.6907), essa diferença de 0.85 pontos percentuais **não é estatisticamente significativa** — pode ser atribuída à variabilidade natural entre folds e não a uma superioridade real do modelo.
+
+O p=0.2227 indica que, assumindo que os dois modelos têm desempenho idêntico, há 22% de probabilidade de observar uma diferença tão grande ou maior apenas por acaso — valor muito acima do limiar de 5%.
+
+**Conclusão:** os dois modelos têm **desempenho estatisticamente equivalente**. A escolha entre eles deve basear-se em critérios secundários:
+
+| Critério | Árvore (d=7) | NN (Shallow) |
+|----------|-------------|--------------|
+| Interpretabilidade | Alta — regras explícitas | Baixa — caixa negra |
+| Estabilidade (std) | ±0.0041 | ±0.0192 |
+| Tempo de treino | Muito rápido | Moderado |
+| Explicabilidade no artigo | Fácil | Requer mais detalhe |
+
+Dado o empate estatístico, a **Árvore de Decisão** é preferível neste contexto — maior estabilidade entre folds (std 5x menor), interpretabilidade direta através da visualização da árvore e da importância de features, e menor custo computacional.
+
+**Nota:** o SVM (Acc=0.6964) foi excluído da comparação pareada por ter sido avaliado num subsample com folds distintos. Se incluído numa comparação não-pareada, o seu desempenho seria compatível com o da Árvore, reforçando a conclusão de equivalência entre os modelos de topo.
+
+=== CELL 79 [markdown] ===
+### 4.3.5 - Curvas de Aprendizagem (melhor e pior modelo)
+
+=== CELL 80 [code] ===
+# 4.3.5 - Curvas de Aprendizagem: Melhor e Pior Modelo de Classificação
+# Nota: a NN não tem suporte em learning_curve (Keras) — comparação feita
+# entre os modelos sklearn. Se a NN for o melhor/pior modelo global,
+# as curvas correspondem ao 2º melhor / 2º pior sklearn.
+
+clf_sklearn_scores = {
+    f'Árvore (d={best_dc})': (DecisionTreeClassifier(max_depth=best_dc, random_state=SEED),
+                               X_clf, np.mean(res_dtc['Acc_folds'])),
+    f'SVM ({best_ks})':      (SVC(kernel=best_ks, C=1.0, random_state=SEED),
+                               X_clf_sc[isc], np.mean(res_svc['Acc_folds'])),
+    f'KNN (k={best_knn})':   (KNeighborsClassifier(n_neighbors=best_knn),
+                               X_clf_sc, np.mean(res_knn['Acc_folds'])),
+}
+
+sorted_clf_sk = sorted(clf_sklearn_scores.items(), key=lambda x: x[1][2], reverse=True)
+best_clf_name,  (best_clf_model,  best_clf_X,  _) = sorted_clf_sk[0]
+worst_clf_name, (worst_clf_model, worst_clf_X, _) = sorted_clf_sk[-1]
+
+print(f'Melhor modelo sklearn: {best_clf_name} (Acc={sorted_clf_sk[0][1][2]:.4f})')
+print(f'Pior  modelo sklearn: {worst_clf_name} (Acc={sorted_clf_sk[-1][1][2]:.4f})')
+print(f'(NN excluída — learning_curve não compatível com Keras)')
+if best_clf_name.startswith('SVM') or worst_clf_name.startswith('SVM'):
+    print(f'Nota: SVM avaliado em subsample n=10000 — curva limitada a esse conjunto')
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# título dinâmico para indicar subsample no SVM
+best_title  = best_clf_name  + (' [subsample]' if 'SVM' in best_clf_name  else '')
+worst_title = worst_clf_name + (' [subsample]' if 'SVM' in worst_clf_name else '')
+
+plot_lc(best_clf_model,  best_clf_X,  y_clf, best_title,  axes[0], scoring='accuracy')
+plot_lc(worst_clf_model, worst_clf_X, y_clf, worst_title, axes[1], scoring='accuracy')
+
+plt.suptitle('Curvas de Aprendizagem – Melhor e Pior Modelo (sklearn)', fontsize=12)
+plt.tight_layout()
+plt.savefig('fig_lc_clf.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 81 [markdown] ===
+#### 4.3.5 — Curvas de Aprendizagem
+
+O melhor modelo sklearn é a **Árvore de Decisão (d=7)** (Acc=0.6992) e o pior é o **KNN (k=15)** (Acc=0.6734). A NN é excluída por incompatibilidade com `learning_curve` — as curvas correspondem ao melhor e pior modelo sklearn.
+
+---
+
+**Árvore de Decisão (d=7) — Melhor Modelo**
+
+A curva revela um padrão claro de **overfitting moderado**:
+
+- A curva de **treino começa alta (~0.76)** e desce progressivamente com mais dados — com poucos exemplos a árvore memoriza facilmente, mas à medida que o dataset cresce torna-se mais difícil ajustar todas as amostras.
+- A curva de **validação começa baixa (~0.67)** e sobe gradualmente, estabilizando em ~0.70.
+- O **gap persistente** entre treino (~0.71) e validação (~0.70) no final indica overfitting ligeiro — o modelo generaliza razoavelmente bem mas ainda aprende alguns padrões específicos do treino que não generalizam.
+- As curvas **não convergem completamente** — com mais dados o gap poderia fechar ainda mais, sugerindo que o modelo beneficiaria de um dataset maior.
+
+A estabilização da validação em ~0.70 com mais de 40 000 amostras indica que o **limite informativo das features foi atingido** — adicionar mais dados não melhora significativamente o desempenho.
+
+---
+
+**KNN (k=15) — Pior Modelo**
+
+A curva revela um padrão de **underfitting progressivo**:
+
+- A curva de **treino mantém-se estável e alta (~0.71)** ao longo de todo o eixo — o KNN com K=15 tem Accuracy de treino consistente independentemente do tamanho do conjunto.
+- A curva de **validação começa muito baixa (~0.61)** e cresce continuamente, atingindo ~0.67 no final — mas **ainda está a crescer**, sem sinais de plateau.
+- O **gap grande e persistente** entre treino (~0.71) e validação (~0.67) indica que o KNN não generaliza tão bem quanto a Árvore.
+- O facto de a curva de validação ainda estar a crescer com 60 000 amostras sugere que o **KNN beneficiaria de mais dados** — ao contrário da Árvore, que já atingiu o seu plateau.
+
+---
+
+**Comparação e Impacto nos Resultados**
+
+| | Árvore (d=7) | KNN (k=15) |
+|--|-------------|-----------|
+| Treino final | ~0.71 | ~0.71 |
+| Validação final | ~0.70 | ~0.67 |
+| Gap treino/validação | Pequeno (~0.01) | Grande (~0.04) |
+| Padrão | Overfitting ligeiro | Underfitting / necessita mais dados |
+| Plateau atingido | Sim (~40 000 amostras) | Não — ainda a crescer |
+
+A Árvore de Decisão é claramente superior — menor gap entre treino e validação, plateau mais cedo e Accuracy de validação mais alta. O KNN, apesar de ter Accuracy de treino semelhante, generaliza pior porque a classificação por vizinhança é mais sensível à distribuição local dos dados e não captura as relações globais entre features tão eficientemente quanto uma árvore de decisão.
+
+=== CELL 82 [markdown] ===
+#### 4.3.6 — Limitações e Estratégias de Melhoria
+
+---
+
+**Limitações dos Dados**
+
+**1. Variável target discreta com apenas 6 valores (`Util_Decimal` = 0.19, 0.39, 0.59, 0.79, 0.99, 1.00)**
+A natureza discreta de `Util_Decimal` impede uma discretização equilibrada em classes — qualquer divisão em 3 grupos resulta em desequilíbrio (51% / 25% / 24%). Este desequilíbrio penaliza sistematicamente a classe `medio`, que apresenta recall de apenas 0.41 na Árvore de Decisão e 0.33 no KNN. A origem desta discretização (arredondamento de percentagens inteiras) sugere perda de resolução nos dados originais da e-REDES.
+
+**2. Variáveis de iluminação pública agregadas ao nível do concelho**
+`P_IP_Total`, `Rate_Ineficiencia`, `Ganho_LED_PTD` e variáveis relacionadas são atribuídas igualmente a todos os PTDs do mesmo município (~377 PTDs/concelho em mediana). Esta agregação introduz variabilidade artificial — PTDs do mesmo concelho têm valores idênticos nestas features, independentemente da sua localização real. A importância de features da Árvore de Decisão confirma este problema: todas as variáveis de IP têm importância ≈ 0, não contribuindo para a classificação.
+
+**3. Impacto marginal do LED ao nível do PTD individual**
+O ganho de potência resultante da transição LED (mediana: 0.32 kVA por PTD) é negligenciável face à escala da folga de rede (mediana: 77.28 kVA). Com 377 PTDs por concelho em mediana, a potência libertada pela eficiência na IP dilui-se de forma uniforme, resultando em apenas 1 PTD (0.00%) a alterar o seu estado de viabilidade para VE. Esta limitação compromete o objetivo central do trabalho — avaliar a sinergia entre eficiência na IP e mobilidade elétrica.
+
+**4. `Pot_Geracao_kW` com 97.5% de valores omissos**
+A geração distribuída (solar fotovoltaico) é um fator crescente na disponibilidade de potência dos PTDs, mas a ausência quase total de dados impede a sua inclusão nos modelos. Com a expansão acelerada do solar em Portugal, esta variável será cada vez mais relevante para prever a folga real de rede.
+
+**5. `PVE_PTD` constante (13.2 kVA)**
+A carga de um carregador VE é assumida constante para todos os PTDs, não distinguindo zonas urbanas de alta densidade (múltiplos carregadores por PTD) de zonas rurais. Esta simplificação subestima a carga real em PTDs urbanos e sobrestima-a em PTDs rurais.
+
+---
+
+**Limitações dos Modelos**
+
+**6. SVM avaliado em subsample (n=10 000 de 68 963)**
+Por limitações computacionais, o SVM foi treinado em apenas 14.5% do dataset. Apesar de apresentar Acc=0.6964 — segundo melhor resultado — o desempenho real no dataset completo pode ser superior. Esta limitação impede também a comparação pareada direta com os restantes modelos no teste estatístico de 4.3.4.
+
+**7. Ausência de tuning de hiperparâmetros além do parâmetro principal**
+A otimização foi limitada a um hiperparâmetro por modelo (`max_depth`, kernel, K). Parâmetros como `C` e `gamma` no SVM, `criterion` na Árvore, ou `weights` no KNN não foram otimizados — uma otimização mais sistemática poderia melhorar o desempenho.
+
+**8. NN incompatível com `learning_curve`**
+A avaliação das curvas de aprendizagem da NN não foi possível via `learning_curve` do sklearn, sendo substituída por um split representativo. Isto limita a análise da eficiência do treino da NN em comparação direta com os modelos sklearn.
+
+---
+
+**Estratégias de Melhoria**
+
+**Dados:**
+- **Dados georreferenciados de IP**: substituir a agregação por concelho por uma alocação geográfica precisa do ganho LED a cada PTD, com base na proximidade entre luminárias e transformadores.
+- **Dados de geração distribuída**: recolher ou imputar `Pot_Geracao_kW` para capturar o impacto do solar fotovoltaico na folga de rede.
+- **Perfis de carga VE por zona**: substituir `PVE_PTD` constante por estimativas baseadas na densidade urbana e nos padrões de adoção de VE por região.
+
+**Modelos:**
+- **SMOTE** (*Synthetic Minority Oversampling Technique*): gerar amostras sintéticas das classes minoritárias (`medio` e `alto`) para equilibrar o dataset e melhorar o recall destas classes — diretamente endereçando o principal ponto fraco identificado na matriz de confusão.
+- **Random Forest / XGBoost**: modelos ensemble que combinam múltiplas árvores, tipicamente superando uma árvore simples e mais robustos ao desequilíbrio de classes.
+- **Otimização manual mais granular de hiperparâmetros**: alargar os intervalos testados para `C` e `gamma` no SVM, `criterion` na Árvore (gini vs entropy) e `weights` no KNN (uniform vs distance).
+- **Estratificação urbana/rural**: treinar modelos separados por `Tipo_Construtivo` — os padrões de ocupação da rede diferem estruturalmente entre PTDs urbanos e rurais, e um modelo global pode não capturar adequadamente ambos os contextos.
+
