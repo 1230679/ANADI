@@ -1,0 +1,484 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Previsão do Nível de Utilização da Rede Elétrica de Distribuição através de Técnicas de Aprendizagem Automática\\
+\thanks{Trabalho desenvolvido no âmbito da unidade curricular de Análise de Dados em Informática (ANADI), ISEP.}
+}
+
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Luna Gomes}
+\IEEEauthorblockA{
+\textit{Departamento de Engenharia Informática}\\
+\textit{ISEP}\\
+Porto, Portugal\\
+1231651@isep.ipp.pt
+}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Mariana Martins}
+\IEEEauthorblockA{
+\textit{Departamento de Engenharia Informática}\\
+\textit{ISEP}\\
+Porto, Portugal\\
+1230679@isep.ipp.pt
+}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Samara Miranda}
+\IEEEauthorblockA{
+\textit{Departamento de Engenharia Informática}\\
+\textit{ISEP}\\
+Porto, Portugal\\
+1230432@isep.ipp.pt
+}
+}
+
+\maketitle
+
+\begin{abstract}
+
+A crescente eletrificação dos transportes e a necessidade de otimizar a utilização da infraestrutura elétrica existente tornam essencial a previsão do nível de ocupação dos Postos de Transformação de Distribuição (PTD). Após uma primeira fase de análise estatística ao nível do concelho, desenvolvida no Trabalho Prático 1, este estudo evolui para uma abordagem ao nível individual dos PTDs recorrendo a técnicas de Aprendizagem Automática. O objetivo consiste em classificar o nível de utilização da rede elétrica em três categorias de ocupação --- baixo, médio e alto --- utilizando variáveis relacionadas com a infraestrutura elétrica, características da iluminação pública e indicadores de eficiência energética.
+
+Foram aplicadas técnicas de pré-processamento, seleção de atributos, balanceamento de classes através do algoritmo SMOTE e validação cruzada k-fold. Foram desenvolvidos e comparados modelos baseados em K-Nearest Neighbors (KNN), Support Vector Machines (SVM) e Árvores de Decisão, avaliando-se o seu desempenho através das métricas Accuracy, Precision, Recall e F1-Score. Adicionalmente, foram analisadas curvas de aprendizagem para identificação de fenómenos de overfitting e underfitting. Os resultados permitem identificar o modelo mais adequado para apoiar decisões relacionadas com a gestão da capacidade da rede elétrica e a integração de novas cargas associadas à mobilidade elétrica.
+
+\end{abstract}
+
+\begin{IEEEkeywords}
+Machine Learning, Classificação, Support Vector Machines, K-Nearest Neighbors, Árvores de Decisão, SMOTE, Redes Elétricas, Postos de Transformação, Mobilidade Elétrica.
+\end{IEEEkeywords}
+
+\section{Introdução}
+
+A transição energética europeia e a crescente adoção de veículos elétricos têm aumentado a pressão sobre as infraestruturas de distribuição de energia. A capacidade disponível nos Postos de Transformação de Distribuição (PTD) assume um papel fundamental na expansão sustentável da mobilidade elétrica, tornando necessária a existência de ferramentas que permitam antecipar situações de saturação da rede.
+
+No Trabalho Prático 1 foi realizada uma análise estatística exploratória ao nível do concelho, permitindo identificar relações entre a capacidade instalada, a iluminação pública e os níveis médios de ocupação da rede. Contudo, os resultados obtidos evidenciaram limitações na capacidade explicativa dos modelos lineares desenvolvidos, motivando uma abordagem mais detalhada ao nível individual dos PTDs.
+
+Neste contexto, o Trabalho Prático 2 procura aplicar técnicas de Aprendizagem Automática para prever o nível de utilização da rede elétrica. Em vez de estimar diretamente uma variável contínua, o problema foi formulado como uma tarefa de classificação multiclasse, permitindo categorizar cada PTD segundo o seu grau de ocupação.
+
+Um dos principais desafios identificados durante a análise exploratória foi o desequilíbrio entre as classes resultantes da discretização da variável de utilização da rede. Para mitigar este problema, foram utilizadas técnicas de balanceamento sintético, nomeadamente o Synthetic Minority Over-sampling Technique (SMOTE), de forma a melhorar a capacidade de generalização dos modelos.
+
+Foram avaliados diferentes algoritmos de classificação amplamente utilizados na literatura, incluindo K-Nearest Neighbors (KNN), Support Vector Machines (SVM) e Árvores de Decisão. O desempenho dos modelos foi analisado através de validação cruzada e métricas clássicas de classificação, permitindo identificar as abordagens mais adequadas para o problema em estudo.
+
+\section{Objetivos}
+
+Os principais objetivos deste trabalho são:
+
+\begin{itemize}
+
+\item Realizar a exploração e preparação dos dados disponibilizados pela e-REDES ao nível individual dos PTDs;
+
+\item Construir uma variável categórica representativa do nível de utilização da rede elétrica;
+
+\item Aplicar técnicas de pré-processamento e engenharia de atributos adequadas ao contexto dos dados;
+
+\item Mitigar os efeitos do desequilíbrio de classes através de técnicas de reamostragem;
+
+\item Desenvolver modelos de classificação utilizando KNN, SVM e Árvores de Decisão;
+
+\item Avaliar e comparar o desempenho dos modelos através de Accuracy, Precision, Recall e F1-Score;
+
+\item Analisar as curvas de aprendizagem de forma a identificar fenómenos de overfitting e underfitting;
+
+\item Identificar limitações dos modelos e propor estratégias de melhoria para trabalhos futuros.
+
+\end{itemize}
+
+\section{Metodologia}
+
+A metodologia seguida neste trabalho está organizada em cinco etapas principais: exploração dos dados, pré-processamento, construção da variável alvo, balanceamento das classes e desenvolvimento dos modelos de classificação. Todo o processo foi implementado em Python recorrendo às bibliotecas \texttt{Pandas}, \texttt{NumPy}, \texttt{Scikit-Learn}, \texttt{Imbalanced-Learn}, \texttt{Matplotlib} e \texttt{Seaborn}.
+
+\subsection{Dataset}
+
+Foi utilizado o conjunto de dados \texttt{PTD\_level\_dataset}, disponibilizado pela e-REDES, contendo aproximadamente 72 mil registos correspondentes a PTDs distribuídos por Portugal Continental. O dataset resulta da integração dos dados de iluminação pública e dos dados técnicos dos postos de transformação, permitindo associar a cada PTD informação relativa ao respetivo concelho.
+
+Entre as variáveis disponíveis encontram-se atributos relacionados com:
+
+\begin{itemize}
+
+\item Capacidade instalada do PTD;
+\item Número de clientes associados;
+\item Potência contratada;
+\item Indicadores de iluminação pública;
+\item Rácio de ineficiência tecnológica;
+\item Número de luminárias;
+\item Número de PTDs por concelho;
+\item Variáveis derivadas de viabilidade energética.
+
+\end{itemize}
+
+A análise desenvolvida neste trabalho incide sobre a previsão do nível de utilização da rede elétrica ao nível individual do PTD.
+
+\subsection{Análise Exploratória dos Dados}
+
+A primeira etapa consistiu na caracterização estatística e visual do dataset.
+
+Foram analisadas as distribuições das principais variáveis através de histogramas, estimativas de densidade (KDE) e diagramas de extremos e quartis. A análise revelou distribuições fortemente assimétricas para variáveis como capacidade instalada, folga de rede e número de clientes, evidenciando a existência de PTDs urbanos de grande dimensão que funcionam como outliers relativamente à maioria da infraestrutura.
+
+Verificou-se igualmente que a variável \texttt{LED\_Ratio} apresenta comportamento bimodal, refletindo a coexistência de concelhos totalmente modernizados e concelhos ainda dependentes de tecnologias convencionais de iluminação pública. A variável de utilização da rede revelou uma distribuição multimodal, justificando a sua discretização em classes para o problema de classificação.
+
+\subsection{Pré-Processamento}
+
+O processo de preparação dos dados incluiu diversas etapas destinadas a melhorar a qualidade da informação utilizada pelos algoritmos.
+
+Inicialmente foram removidas variáveis identificadoras e atributos sem relevância preditiva direta, nomeadamente códigos geográficos, coordenadas e representações redundantes de variáveis já disponíveis em formato numérico.
+
+Os valores omissos presentes em atributos relacionados com potência contratada foram imputados utilizando a mediana por tipo construtivo do PTD, preservando assim as características estruturais dos diferentes grupos de equipamentos.
+
+Variáveis com percentagens muito elevadas de valores nulos, nomeadamente atributos relacionados com geração distribuída, foram removidas da modelação devido à reduzida qualidade informativa.
+
+As variáveis categóricas foram convertidas para formato numérico através de técnicas de codificação apropriadas e os atributos contínuos foram normalizados utilizando \texttt{StandardScaler}, garantindo comparabilidade entre escalas distintas.
+
+\subsection{Construção da Variável Alvo}
+
+O objetivo da classificação consiste em prever o nível de utilização da rede elétrica.
+
+Para esse efeito, a variável contínua \texttt{Util\_Decimal} foi discretizada em três classes:
+
+\begin{itemize}
+
+\item \textbf{Baixo} -- PTDs com níveis reduzidos de ocupação;
+\item \textbf{Médio} -- PTDs com ocupação intermédia;
+\item \textbf{Alto} -- PTDs próximos dos limites de capacidade.
+
+\end{itemize}
+
+A discretização foi realizada utilizando quantis, permitindo obter classes aproximadamente equilibradas e evitando a concentração excessiva de observações numa única categoria. Esta abordagem reduz o enviesamento dos modelos e facilita a comparação entre algoritmos.
+
+\subsection{Balanceamento das Classes}
+
+Apesar da discretização baseada em quantis produzir distribuições mais equilibradas, verificou-se a existência de diferenças na frequência relativa das classes após a divisão dos dados para treino e teste.
+Para mitigar este problema foi utilizada a técnica \textit{Synthetic Minority Over-sampling Technique} (SMOTE). Este algoritmo gera observações sintéticas para as classes minoritárias através da interpolação entre exemplos vizinhos, aumentando a representatividade das categorias menos frequentes sem replicar diretamente observações existentes.
+A aplicação do SMOTE foi realizada exclusivamente sobre os conjuntos de treino, evitando fugas de informação (\textit{data leakage}) para os conjuntos de validação.
+
+\subsection{Modelos de Classificação}
+
+Foram desenvolvidos três modelos de classificação representativos de diferentes paradigmas de Aprendizagem Automática.
+
+\subsubsection{K-Nearest Neighbors (KNN)}
+
+O algoritmo KNN classifica cada observação com base nas classes predominantes dos seus vizinhos mais próximos no espaço das características. O parâmetro $k$ foi otimizado experimentalmente recorrendo a validação cruzada.
+
+\subsubsection{Support Vector Machine (SVM)}
+
+As Support Vector Machines procuram construir hiperplanos que maximizem a separação entre classes. Foram avaliadas diferentes funções kernel, selecionando-se a configuração que apresentou melhor desempenho médio durante o processo de validação.
+
+\subsubsection{Árvores de Decisão}
+
+As Árvores de Decisão realizam sucessivas divisões do espaço de atributos com o objetivo de maximizar a pureza das classes em cada nó. Para reduzir o risco de sobreajuste foram avaliados parâmetros relacionados com profundidade máxima e número mínimo de observações por folha.
+
+\subsection{Validação Experimental}
+
+Todos os modelos foram avaliados através de validação cruzada k-fold, garantindo uma estimativa robusta da capacidade de generalização.
+
+As métricas utilizadas foram:
+
+\begin{itemize}
+
+\item Accuracy;
+\item Precision;
+\item Recall;
+\item F1-Score.
+
+\end{itemize}
+
+Adicionalmente, foram construídas curvas de aprendizagem para os modelos com melhor desempenho, permitindo avaliar a evolução simultânea dos resultados de treino e validação e identificar possíveis fenómenos de overfitting ou underfitting.
+
+
+\section{Tratamento e Engenharia de Variáveis (ETL)}
+\subsection{Processamento da Iluminação Pública}
+
+No dataset IP\_data, criou-se a variável binária \texttt{Is\_Ineficiente} (1 para Sódio ou Mercúrio; 0 para outros tipos) e converteu-se a potência para kW. Os dados foram agregados por \texttt{CodDistritoConcelho} para obter:
+\begin{align}
+P\_IP\_Total_c &= \textstyle\sum_{i \in c} P_i^{(kW)} \\
+P\_IP\_Inef_c &= \textstyle\sum_{\substack{i \in c,\\ \text{Is\_Inef}=1}} P_i^{(kW)}
+\end{align}
+
+\subsection{Processamento dos PTDs}
+
+O campo ``Nível de Utilização [\%]'' foi normalizado para decimal extraindo o limite superior de cada intervalo (e.g., ``60\%-79\%'' $\to$ 0.79). Os dados foram agregados por concelho para obter a capacidade total (\texttt{Cap\_PTD}), utilização média (\texttt{Util\_Media}) e número de postos (\texttt{N\_PTDs}). Identificaram-se 3\,064 valores nulos e 14\,338 valores indeterminados, perfazendo 17\,402 registos afetados (24,16\% do total).
+
+\subsection{Variáveis de Viabilidade do Dataset Consolidado}
+
+A fusão dos dois datasets via \texttt{CodDistritoConcelho} resultou em 278 concelhos. Foram criadas as seguintes variáveis de análise:
+\begin{align}
+\Delta P_{LED}  &= P\_IP\_Inef \times 0.65 \label{eq:dpled}\\
+P_{Folga}       &= (Cap_{PTD} \times 0.92) \times (1 - Util_{Media}) \label{eq:pfolga}\\
+P_{VE}          &= N_{PTDs} \times 22 \times 0.60 \label{eq:pve}\\
+D               &= P_{Folga} + \Delta P_{LED} - P_{VE} \label{eq:d}\\
+Rate\_Inef      &= P\_IP\_Inef \;/\; P\_IP\_Total \label{eq:rate}
+\end{align}
+
+O saldo $D > 0$ determina a viabilidade técnica do concelho para suportar novas cargas de VE sem comprometer a operação segura da rede.
+
+\section{Análise Exploratória de Dados}
+
+\subsection{Mix Tecnológico e Concentração de Potência}
+
+A análise do mix tecnológico da IP revelou que uma proporção relevante da potência instalada ainda provém de tecnologias convencionais (Sódio e Mercúrio). O gráfico de barras da potência ineficiente por município evidencia que esta se concentra num grupo restrito de concelhos, essencialmente capitais de distrito e municípios de maior dimensão, definindo prioridades geográficas claras para as políticas de modernização.
+
+\subsection{Distribuição da Ocupação por Distrito}
+
+Os diagramas de extremos e quartis dos PTDs nos distritos de Aveiro, Lisboa, Porto e Setúbal evidenciaram padrões distintos. \textbf{Lisboa apresenta a maior variabilidade de carga}, reflexo da heterogeneidade urbana e industrial, com vários municípios próximos dos limites de capacidade. Os distritos do Norte apresentam distribuições mais compactas e homogéneas.
+
+
+\subsection{Top 10 Municípios com Maior Potência Instalada Ineficiente}
+
+A análise do Top 10 municípios com maior potência instalada em tecnologias ineficientes (Fig. 3) revela uma concentração significativa de carga que poderia ser otimizada. Concelhos como Cascais e Sintra apresentam valores que ultrapassam os 3500kW de potência em lâmpadas de mercúrio e sódio. Esta acumulação de potência ineficiente representa uma oportunidade crítica: a transição total para LED nestes pontos estratégicos permitiria libertar capacidade imediata nos Postos de Transformação (PTD) locais, facilitando a integração de carregadores de veículos elétricos sem necessidade de reforço estrutural da rede primária.
+
+
+
+\subsection{Valores Omissos e Outliers}
+
+
+A prevalência de dados omissos foi quantificada em 17\,402 registos (24,16\% do total de PTDs). O boxplot do nível de utilização individual mostra que 50\% dos PTDs operam entre 38\% e 58\% de capacidade. Contudo, identificaram-se outliers críticos com valores $\geq 100\%$, revelando transformadores em sobrecarga. Estes constituem estrangulamentos da rede onde a instalação de carregadores VE é tecnicamente inviável sem intervenção prévia de reforço.
+
+
+
+\subsection{Estatística Descritiva por Concelho}
+
+A Tabela~\ref{tab:stats_concelhos} apresenta a estatística descritiva do nível de utilização individual dos PTDs para os concelhos de Braga, Coimbra, Faro e Évora (4 casas decimais).
+
+\begin{table}[htbp]
+\caption{Estatística Descritiva do Nível de Utilização por Concelho}
+\label{tab:stats_concelhos}
+\centering
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccccccc}
+\hline
+\textbf{Concelho} & \textbf{Média} & \textbf{DP} & \textbf{Q1} & \textbf{Mediana} & \textbf{Q3} & \textbf{Assim.} & \textbf{Kurt.} \\
+\hline
+Braga   & 0.5423 & 0.2401 & 0.39 & 0.59 & 0.79 & 0.4280  & $-$0.7116 \\
+Coimbra & 0.5406 & 0.2322 & 0.39 & 0.59 & 0.79 & 0.2258  & $-$0.7060 \\
+Faro    & 0.5549 & 0.2126 & 0.39 & 0.59 & 0.59 & 0.3009  & $-$0.4757 \\
+Évora   & 0.4546 & 0.2425 & 0.19 & 0.39 & 0.59 & 0.6680  & $-$0.4254 \\
+\hline
+\end{tabular}
+\end{table}
+
+Faro é o concelho com a rede mais carregada em média (55,49\%), enquanto Évora apresenta a maior folga (45,46\%). A assimetria positiva em todos os concelhos indica que existem mais PTDs em cargas baixas/médias do que em sobrecarga extrema. Os valores de curtose negativos (distribuições platicúrticas) revelam que as cargas estão amplamente distribuídas pelos vários níveis de utilização.
+
+\section{Análise e Inferência Estatística}
+\subsection{Teste de Normalidade e Hipótese de Folga}
+
+Para garantir a validade das inferências paramétricas, aplicou-se o teste de Shapiro-Wilk à variável de ocupação média municipal ($Util\_Media$) numa amostra aleatória de 50 concelhos. O teste resultou num valor de estatística $W = 0.962$ com um \textbf{$p$-value = 0.0717}. Sendo $p > 0.05$, não existe evidência estatística para rejeitar a hipótese nula ($H_0$) de normalidade da distribuição.
+
+Com a normalidade verificada, procedeu-se a um teste de hipóteses (T-Test) para uma amostra para avaliar a existência de capacidade disponível na rede nacional. Definiu-se como hipótese nula que a ocupação média é igual ou superior a 60\% ($H_0: \mu \ge 0.60$) contra a alternativa de que a rede opera, em média, com folga significativa ($H_1: \mu < 0.60$). O teste estatístico produziu um \textbf{$p$-value $\approx 0$} (inferior a $0.0001$).
+
+\textit{Conclusão:} Dado que o $p$-value é amplamente inferior ao nível de significância adotado ($\alpha = 0.05$), rejeita-se $H_0$. Este resultado permite afirmar, com um nível de confiança de 95\%, que a infraestrutura nacional de distribuição possui, em média, uma ocupação significativamente inferior ao limite de alerta de 60\%, comprovando a viabilidade teórica para a integração de novas cargas de mobilidade elétrica.
+
+\subsection{Teste de Duas Amostras: Modernizados vs. Ineficientes}
+
+Com base na mediana do rácio de LED, definiram-se dois grupos: ``Modernizados'' (rácio de LED acima da mediana) e ``Ineficientes'' (rácio de LED abaixo ou igual à mediana). Selecionaram-se 30 concelhos de cada grupo aleatoriamente.
+
+Antes de aplicar o teste comparativo, verificaram-se os pressupostos de normalidade e homogeneidade de variâncias. O teste de Shapiro-Wilk confirmou a normalidade de ambas as amostras ($p = 0.4591$ para os concelhos Modernizados e $p = 0.4009$ para os Ineficientes). O teste de Levene indicou homogeneidade de variâncias entre os grupos ($p = 0.5988 > 0.05$).
+
+Face à confirmação dos pressupostos, aplicou-se o t-test de 
+Welch bilateral com $\alpha = 0.05$. O resultado obtido 
+($t = -0.8463$, $p = 0.4009$) não permitiu rejeitar a 
+hipótese nula. Conclui-se que o grau de modernização 
+tecnológica da IP não influencia significativamente 
+o nível de ocupação médio da rede elétrica.
+
+\subsection{ANOVA: Diferenças Regionais na Ocupação}
+
+Constituíram-se três amostras de 25 concelhos: (1)~Norte/Centro Litoral (Porto, Braga, Coimbra), (2)~Lisboa e Litoral Sul (Lisboa, Setúbal, Aveiro) e (3)~Interior/Alentejo (Évora, Beja, Portalegre).
+
+Verificaram-se previamente os pressupostos paramétricos. O teste de Shapiro-Wilk confirmou a normalidade das três amostras regionais (Norte/Centro Litoral: $p = 0.6281$; Lisboa e Litoral Sul: $p = 0.7445$; Interior/Alentejo: $p = 0.3923$). O teste de Levene confirmou a homogeneidade de variâncias entre os três grupos ($p = 0.7042 > 0.05$).
+
+A ANOVA One-Way revelou diferenças estatisticamente 
+significativas entre os perfis regionais 
+($F = 30.0562$, $p < 0.001$), rejeitando-se a hipótese 
+nula. A análise post-hoc de Tukey HSD identificou 
+diferenças significativas entre o Interior/Alentejo 
+e o Norte/Centro Litoral ($p < 0.05$, $\Delta = 0.1109$) 
+e entre o Interior/Alentejo e Lisboa e Litoral Sul 
+($p < 0.05$, $\Delta = 0.0837$). Entre os dois grupos 
+litorais não se verificaram diferenças significativas 
+($p = 0.1687$). Estes resultados sugerem que as regiões 
+do interior apresentam ocupações consistentemente 
+inferiores às zonas litorais, refletindo uma menor 
+densidade de infraestrutura e de consumo energético.
+
+\subsection{Correlação de Pearson: Cap\_PTD vs. P\_IP\_Total}
+
+Para a totalidade dos 278 concelhos, o coeficiente de Pearson entre \texttt{Cap\_PTD} e \texttt{P\_IP\_Total} é:
+\[
+r = 0.9111, \quad p \approx 3.13 \times 10^{-108}
+\]
+
+O resultado evidencia uma correlação linear positiva muito forte e estatisticamente significativa ($p \ll 0.001$). O dimensionamento da infraestrutura de transformação acompanha de forma altamente proporcional a carga da IP, traduzindo a coevolução histórica destas infraestruturas municipais.
+
+\section{Correlação e Regressão --- Modelo Preditivo}
+
+\subsection{Tabela de Correlação nos 4 Distritos}
+
+Para os distritos de Aveiro, Braga, Lisboa e Porto, a correlação de Pearson entre \texttt{Cap\_PTD} e \texttt{P\_IP\_Total} é $r = 0.9129$, confirmando a relação muito forte também nos grandes centros urbanos.
+
+\subsection{Modelo de Regressão Linear Múltipla}
+
+Para Portugal Continental (278 observações), ajustou-se o modelo OLS com $Y = \texttt{Util\_Media}$, $X_1 = \texttt{P\_IP\_Total}$, $X_2 = \texttt{Cap\_PTD}$ e $X_3 = \texttt{Rate\_Ineficiencia}$:
+
+\begin{equation}
+\hat{Y} = 0.4989 + 4.594 \!\times\! 10^{-5} X_1 - 2.7 \!\times\! 10^{-7} X_2 + 0.0127 X_3
+\label{eq:modelo}
+\end{equation}
+
+Os principais indicadores de qualidade estão na Tabela~\ref{tab:ols}.
+
+\begin{table}[htbp]
+\caption{Sumário do Modelo OLS}
+\label{tab:ols}
+\centering
+\begin{tabular}{lc}
+\hline
+\textbf{Estatística}  & \textbf{Valor}  \\
+\hline
+$R^2$                 & 0.074           \\
+$R^2$ Ajustado        & 0.064           \\
+F-statistic           & 7.300           \\
+Prob (F)              & 0.000100        \\
+N.º Observações       & 278             \\
+AIC                   & $-$726.2        \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Verificação dos Pressupostos dos Resíduos}
+
+\begin{itemize}
+    \item \textbf{Normalidade (Shapiro-Wilk)}: $p = 0.0301 < 0.05$ --- pressuposto violado.
+    \item \textbf{Independência (Durbin-Watson)}: estatística $= 1.433$, marginalmente abaixo do limiar de 1.5, indicando autocorrelação positiva ligeira --- pressuposto parcialmente violado.
+    \item \textbf{Homocedasticidade (Breusch-Pagan)}: $p = 0.1710 > 0.05$ --- variância constante confirmada.
+\end{itemize}
+
+As violações da normalidade e independência são coerentes com o baixo $R^2$, refletindo a omissão de variáveis explicativas fundamentais (consumo doméstico e industrial).
+
+\subsection{Análise de Multicolinearidade (VIF)}
+
+\begin{table}[htbp]
+\caption{Variance Inflation Factor (VIF)}
+\label{tab:vif}
+\centering
+\begin{tabular}{lc}
+\hline
+\textbf{Variável}               & \textbf{VIF} \\
+\hline
+$X_1$ --- P\_IP\_Total          & 8.45 \\
+$X_2$ --- Cap\_PTD              & 7.26 \\
+$X_3$ --- Rate\_Ineficiencia    & 1.52 \\
+\hline
+\end{tabular}
+\end{table}
+
+$X_1$ e $X_2$ apresentam VIF $>$ 5, confirmando multicolinearidade severa, consistente com $r = 0.91$. A inflação da variância compromete a interpretabilidade individual dos coeficientes. $X_3$ (VIF = 1.52) está isenta de problemas de colinearidade.
+
+\subsection{Comentário ao Modelo}
+
+Com $R^2_{adj} = 0.064$, o modelo explica apenas 6.4\% da variabilidade da ocupação da rede. Os preditores $X_1$ e $X_2$ são estatisticamente significativos ($p < 0.001$), enquanto $X_3$ não o é ($p = 0.577$). A forte multicolinearidade entre $X_1$ e $X_2$ dificulta a separação dos efeitos individuais. O modelo funciona como indicador geral de nível de carga esperado, mas é insuficiente para capturar a complexidade real dos consumos locais.
+
+\subsection{Previsões para o Distrito de Aveiro}
+
+\begin{table}[htbp]
+\caption{Previsões vs. Valores Reais --- Distrito de Aveiro (concelhos 101--109)}
+\label{tab:previsoes}
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Concelho}  & \textbf{Y Real} & \textbf{Y Prev.} & \textbf{Erro} \\
+\hline
+Albergaria-a-Velha & 0.4699 & 0.5057 & $-$0.0358 \\
+Anadia             & 0.5430 & 0.5155 & $+$0.0275 \\
+Arouca             & 0.5274 & 0.5170 & $+$0.0104 \\
+Aveiro             & 0.4755 & 0.4958 & $-$0.0203 \\
+Castelo de Paiva   & 0.5432 & 0.5144 & $+$0.0288 \\
+Espinho            & 0.4434 & 0.5014 & $-$0.0580 \\
+Estarreja          & 0.5076 & 0.5074 & $+$0.0002 \\
+\hline
+\end{tabular}
+\end{table}
+
+As previsões concentram-se numa faixa estreita (49\%--53\%), sendo incapazes de captar a variação real. Os erros mais elevados verificam-se em Espinho ($-$5.8\%) e Albergaria-a-Velha ($-$3.6\%), corroborando o baixo poder preditivo do modelo.
+
+\subsection{Impacto da Redução de 20\% na Taxa de Ineficiência}
+
+Aplicando $\hat{\beta}_3 = 0.0127$ do modelo~\eqref{eq:modelo}:
+\[
+\Delta Y = \hat{\beta}_3 \times (-0.20) = 0.0127 \times (-0.20) = -0.00254
+\]
+
+A redução prevista seria de $\approx$0.25\%. Como $X_3$ não é estatisticamente significativo ($p = 0.577$), $\hat{\beta}_3$ não é estatisticamente diferente de zero. A implementação de tecnologia LED não tem impacto mensurável na desocupação global dos PTDs a nível concelhio.
+
+\subsection{Identificação de Concelhos Viáveis para VE}
+
+\begin{table}[htbp]
+\caption{Concelhos Mais Viáveis para Carregadores VE de 22~kW}
+\label{tab:viabilidade}
+\centering
+\begin{tabular}{lcc}
+\hline
+\textbf{Concelho}  & \textbf{Y Real} & \textbf{Lim. Sup. 95\%} \\
+\hline
+Porto              & 0.4219 & 0.5399 \\
+Vila Nova de Gaia  & 0.4179 & 0.5412 \\
+Lisboa             & 0.4005 & 0.5972 \\
+Évora              & 0.4546 & 0.6173 \\
+Beja               & 0.4467 & 0.6213 \\
+\hline
+\end{tabular}
+\end{table}
+
+A decisão de alocação de nova carga deve basear-se no limite superior do intervalo de confiança (cenário mais conservador). Porto e Vila Nova de Gaia apresentam os limites mais baixos (53.99\% e 54.12\%), com folga superior a 40\% no pior cenário previsto. Lisboa segue com 59.72\%. Dado o baixo $R^2_{adj}$, estas previsões devem ser validadas com medições locais ao nível de cada PTD antes de qualquer decisão de investimento.
+
+\section{Dashboard Interativo}
+
+Foi desenvolvido um dashboard interativo em \texttt{Streamlit} que integra os dois datasets e disponibiliza:
+\begin{itemize}
+    \item \textbf{Perfis horários} de consumo da IP (antes vs. depois da migração LED) em Plotly. Uma vez que os dados originais não contêm séries temporais horárias, o perfil apresentado é uma aproximação baseada no comportamento típico da iluminação pública --- ativa entre o pôr do sol ($\approx$18h) e o nascer do sol ($\approx$6h) --- com as potências totais calculadas a partir dos dados reais;
+    \item \textbf{KPIs} em tempo real: potência libertada ($\Delta P_{LED}$), carga VE total ($P_{VE}$) e viabilidade global;
+    \item \textbf{Simulação de cenários} via sliders: eficiência LED (0--100\%), penetração VE (0--100\%) e potência do carregador (3.7, 7.4, 11, 22~kW);
+    \item \textbf{Mapa geográfico} com localização dos PTDs e saldo de viabilidade por concelho;
+    \item \textbf{Tabela interativa} com capacidade instalada, folga e saldo final por concelho.
+\end{itemize}
+
+\section{Conclusão}
+
+Este trabalho analisou a relação entre a eficiência tecnológica da IP e a capacidade de carga dos PTDs em Portugal Continental, com foco na integração de VE. A análise exploratória revelou que 24.16\% dos registos PTD contêm dados omissos ou indeterminados. O t-test confirmou folga global de capacidade nos PTDs ($p \approx 0$). A correlação de Pearson ($r = 0.9111$) evidenciou uma relação linear muito forte entre a capacidade de transformação e a carga de IP. A ANOVA confirmou diferenças regionais significativas, com o Interior/Alentejo a apresentar ocupações mais baixas. O teste de duas amostras não revelou diferença significativa entre concelhos modernizados e ineficientes, sugerindo que a modernização da IP não é o fator dominante na carga dos PTDs.
+
+
+
+O modelo de regressão apresenta poder explicativo limitado ($R^2_{adj} = 6.4\%$), com multicolinearidade severa entre $X_1$ e $X_2$ e $X_3$ estatisticamente não significativo. Porto, Vila Nova de Gaia e Lisboa destacam-se como os municípios mais aptos para receber carregadores de 22~kW. Como trabalho futuro, propõe-se a inclusão de variáveis de consumo doméstico e industrial e a aplicação de modelos não lineares para melhorar o poder preditivo.
+
+
+\section*{Agradecimentos}
+
+Este trabalho foi realizado com o apoio de ferramentas de Inteligência Artificial Generativa (Gemini 2.5 Flash) para auxílio na estruturação de código Python e refinamento do texto em \LaTeX, seguindo as normas éticas de utilização de IA da instituição.
+
+\begin{thebibliography}{00}
+\bibitem{b1} C. Heumann e M. Schomaker Shalabh, \textit{Introduction to Statistics and Data Analysis},
+Springer International Publishing, 2016.
+\bibitem{b2} D.\,C. Montgomery, \textit{Design and Analysis of Experiments}, 8.ª~ed.,
+John Wiley \& Sons, Nova Iorque, 2013.
+\bibitem{b3} W. McKinney, \textit{Python for Data Analysis: Data Wrangling with Pandas, NumPy, and Jupyter},
+3.ª~ed., O'Reilly Media, 2022.
+\bibitem{b4} e-REDES, ``Portal de Dados Abertos,'' [Online].
+Acedido em: março de 2026.
+\bibitem{b5} J.\,H. McDonald, \textit{Handbook of Biological Statistics}, 3.ª~ed.,
+Sparky House Publishing, Baltimore, 2014.
+\bibitem{b6} G. James, D. Witten, T. Hastie e R. Tibshirani,
+\textit{An Introduction to Statistical Learning}, 2.ª~ed., Springer, 2021.
+\end{thebibliography}
+
+\end{document}
