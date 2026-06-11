@@ -100,6 +100,9 @@ Os principais objetivos deste trabalho são:
 
 A metodologia seguida neste trabalho está organizada em cinco etapas principais: exploração dos dados, pré-processamento, construção da variável alvo, balanceamento das classes e desenvolvimento dos modelos de classificação. Todo o processo foi implementado em Python recorrendo às bibliotecas \texttt{Pandas}, \texttt{NumPy}, \texttt{Scikit-Learn}, \texttt{Imbalanced-Learn}, \texttt{Matplotlib} e \texttt{Seaborn}.
 
+\subsubsection{Random Forest}
+Para combater a tendência de sobreajuste das Árvores de Decisão simples, implementou-se um modelo \textit{ensemble} Random Forest. Este algoritmo combina múltiplas árvores de decisão independentes, treinadas em subconjuntos aleatórios dos dados, reduzindo a variância e melhorando significativamente a robustez e precisão geral da classificação.
+
 \subsection{Dataset}
 
 Foi utilizado o conjunto de dados \texttt{PTD\_level\_dataset}, disponibilizado pela e-REDES, contendo aproximadamente 72 mil registos correspondentes a PTDs distribuídos por Portugal Continental. O dataset resulta da integração dos dados de iluminação pública e dos dados técnicos dos postos de transformação, permitindo associar a cada PTD informação relativa ao respetivo concelho.
@@ -143,6 +146,13 @@ Verificou-se igualmente que a variável \texttt{LED\_Ratio} apresenta comportame
 \end{subfigure}
 \caption{Distribuição Bimodal da modernização (a) e da Ocupação dos PTDs (b), justificando a discretização em três classes.}
 \label{fig:eda_distributions}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{../fig_outliers.png}
+\caption{Identificação de \textit{outliers} e dispersão dos dados nas variáveis principais da infraestrutura.}
+\label{fig:outliers}
 \end{figure}
 
 \subsection{Pré-Processamento}
@@ -238,7 +248,14 @@ KNN ($k=5$) & 0.7554 & 0.76 & 0.76 & 0.75 \\
 
 A introdução do algoritmo \textit{ensemble} Random Forest, parametrizado com 100 estimadores e profundidade controlada, elevou substancialmente a Accuracy para cerca de 83.18\%, superando as abordagens de classificador único, ao gerir melhor a variância e complexidade espacial dos dados.
 
-Os resultados mostram que a Árvore de Decisão com profundidade máxima igual a 7 apresentou o melhor desempenho global, obtendo os valores mais elevados de Accuracy e F1-Score. O SVM com kernel RBF apresentou resultados muito próximos, evidenciando uma elevada capacidade de generalização. A Rede Neuronal obteve desempenho competitivo, embora com maior variabilidade entre partições de validação. O KNN foi o modelo menos eficaz, apresentando os valores mais baixos em todas as métricas avaliadas.
+Os resultados evidenciam que o modelo \textit{ensemble} Random Forest apresentou, de forma destacada, o melhor desempenho global, alcançando os valores mais elevados de Accuracy (83.18\%) e F1-Score. A Árvore de Decisão simples obteve o segundo melhor desempenho, mas mostrou-se mais suscetível a variações nos dados. O SVM (kernel RBF) evidenciou uma capacidade de generalização moderada, enquanto o KNN foi o modelo menos eficaz, refletindo a dificuldade de algoritmos baseados em distância em lidar com a alta dimensionalidade e sobreposição das classes neste dataset.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{../fig_knn_k.png}
+\caption{Otimização do hiperparâmetro $k$ no modelo KNN. A escolha do valor ideal é crucial para equilibrar o viés e a variância do modelo.}
+\label{fig:knn_k}
+\end{figure}
 
 A diferença reduzida entre os dois melhores modelos motivou a realização de testes estatísticos adicionais. O teste t pareado aplicado às accuracies obtidas nos diferentes \textit{folds} não revelou diferenças estatisticamente significativas ao nível de significância de 5\%, indicando que a superioridade observada da Árvore de Decisão face à Rede Neuronal não pode ser considerada conclusiva do ponto de vista estatístico.
 
@@ -279,6 +296,13 @@ A análise de importância de atributos realizada para a Árvore de Decisão rev
 \item \texttt{N\_Clientes}.
 \end{itemize}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{../fig_feat_imp_clf.png}
+\caption{Importância das características (Feature Importance) extraída do modelo de classificação baseado em árvores, destacando a relevância da capacidade instalada por cliente.}
+\label{fig:feat_imp_clf}
+\end{figure}
+
 A variável \texttt{Cap\_per\_Cliente} destacou-se claramente como o atributo mais informativo, concentrando mais de 70\% da importância total do modelo. Este resultado sugere que a relação entre capacidade disponível e número de clientes constitui o principal indicador do nível de utilização da rede.
 
 Por outro lado, as variáveis associadas à iluminação pública apresentaram contributos reduzidos para a classificação. Tal resultado é consistente com a natureza agregada destes atributos ao nível do concelho, que não refletem adequadamente as diferenças individuais entre PTDs.
@@ -289,6 +313,13 @@ As curvas de aprendizagem permitiram analisar a eficiência do processo de trein
 
 A Árvore de Decisão apresentou um padrão característico de ligeiro sobreajuste (\textit{overfitting}). A Accuracy de treino manteve-se consistentemente superior à Accuracy de validação, embora a diferença entre ambas fosse relativamente reduzida. Este comportamento indica que o modelo aprende alguns padrões específicos do conjunto de treino, mas continua a generalizar adequadamente para dados não observados.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{../fig_comparacao_regressao.png}
+\caption{Curvas de Aprendizagem. É visível que as Árvores simples sofrem de um rápido \textit{overfitting} (desvio entre treino e validação), enquanto modelos otimizados estabilizam precocemente.}
+\label{fig:learning_curves}
+\end{figure}
+
 Por sua vez, o KNN evidenciou sinais de subajuste (\textit{underfitting}). Apesar de apresentar resultados razoáveis no conjunto de treino, a curva de validação permaneceu significativamente abaixo da curva de treino e continuou a crescer à medida que mais exemplos eram disponibilizados. Este comportamento sugere que o modelo ainda não consegue capturar integralmente a estrutura dos dados.
 
 O SVM demonstrou um comportamento mais equilibrado, apresentando boa capacidade de generalização e reduzida diferença entre desempenho de treino e validação. A Rede Neuronal revelou igualmente estabilidade durante o treino, não tendo sido observados sinais evidentes de sobreajuste graças à utilização de mecanismos de regularização e \textit{early stopping}.
@@ -297,9 +328,9 @@ De forma global, os resultados das curvas de aprendizagem indicam que os modelos
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{../fig_comparacao_regressao.png}
-\caption{Curvas de Aprendizagem. É visível que as Árvores simples sofrem de um rápido \textit{overfitting} (desvio entre treino e validação), enquanto modelos otimizados estabilizam precocemente.}
-\label{fig:learning_curves}
+\includegraphics[width=\linewidth]{../fig_lc_clf.png}
+\caption{Curvas de Aprendizagem dos modelos de classificação. A convergência entre as linhas de treino e validação permite diagnosticar o equilíbrio entre \textit{overfitting} e \textit{underfitting}.}
+\label{fig:learning_curves_clf}
 \end{figure}
 
 \section{Limitações e Trabalho Futuro}
