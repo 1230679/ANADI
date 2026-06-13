@@ -1,0 +1,289 @@
+=== CELL 3 [markdown] ===
+---
+## 4.1. Análise Exploratória de Dados (EDA)
+### 4.1.1 - Carregar dataset e sumário
+
+=== CELL 4 [code] ===
+df = pd.read_excel('PTD_level_dataset.xlsx')
+print('Dimensão:', df.shape)
+df.head()
+
+=== CELL 5 [code] ===
+# Sumário de nulos
+info_df = pd.DataFrame({
+    'dtype': df.dtypes,
+    'nulos': df.isnull().sum(),
+    'nulos_%': (df.isnull().sum() / len(df) * 100).round(2)
+})
+print('Colunas com valores omissos:')
+print(info_df[info_df['nulos'] > 0].to_string())
+print('\nEstatísticas descritivas (variáveis chave do TP1 e TP2):')
+key_cols = ['Cap_PTD_kVA', 'N_Clientes', 'P_IP_Total', 'P_IP_Inef',
+            'Rate_Ineficiencia', 'LED_Ratio', 'Ganho_LED_PTD',
+            'PFolga_PTD', 'PVE_PTD', 'D_PTD', 'D_PTD_LED', 'Util_Decimal']
+df[key_cols].describe().round(4)
+
+=== CELL 6 [markdown] ===
+#### Interpretação do Sumário
+
+O dataset contém aproximadamente **72 000 registos** (PTDs distribuídos por Portugal). Da análise do sumário destacam-se:
+
+- **`Pot_Contratada_kVA`** e derivadas (`PContratada_per_Cliente`, `Geracao_per_Cliente`, `Clientes_Produtores_Ratio`): ~29% de valores omissos — imputados pela mediana por `Tipo Construtivo`, assumindo que PTDs do mesmo tipo têm perfis de contratação semelhantes.
+- **`Pot_Geracao_kW`** e variáveis de geração distribuída: ~97,5% de nulos — excluídas do processo de modelação por não representarem informação fiável.
+- As restantes variáveis principais (`Cap_PTD_kVA`, `PFolga_PTD`, `Util_Decimal`, etc.) apresentam **zero valores omissos** após a remoção dos PTDs sem nível de utilização (~4,3% do dataset).
+- A `PVE_PTD` é constante (13,2 kVA), pelo que tem variância nula e é excluída das features de modelação.
+
+
+=== CELL 7 [markdown] ===
+**Verificação das fórmulas do TP1 no dataset TP2:**
+- `PFolga_PTD = Cap_PTD_kVA × 0.92 × (1 − Util_Decimal)` ✓
+- `PVE_PTD = 22 × 0.60 = 13.2 kW` (constante por PTD) ✓
+- `D_PTD = PFolga_PTD − PVE_PTD` ✓
+- `D_PTD_LED = PFolga_PTD + Ganho_LED_PTD − PVE_PTD` ✓
+- `Rate_Ineficiencia = P_IP_Inef / P_IP_Total` ✓
+
+=== CELL 8 [markdown] ===
+### 4.1.2 - Exploração visual
+
+=== CELL 9 [code] ===
+# --- Plot 1: KDE com mediana para todas as variáveis numéricas ---
+plot_cols = ['Cap_PTD_kVA', 'N_Clientes', 'P_IP_Total', 'Rate_Ineficiencia',
+             'LED_Ratio', 'Ganho_LED_PTD', 'PFolga_PTD', 'D_PTD', 'D_PTD_LED', 'Util_Decimal']
+
+fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+axes = axes.flatten()
+for i, col in enumerate(plot_cols):
+    sns.kdeplot(df[col].dropna(), ax=axes[i], fill=True, color='steelblue', alpha=0.6)
+    axes[i].axvline(df[col].median(), color='red', linestyle='--', lw=1.2, label=f'med={df[col].median():.1f}')
+    axes[i].axvline(df[col].mean(), color='orange', linestyle='--', lw=1.2, label=f'mean={df[col].mean():.1f}')
+    axes[i].set_title(col, fontsize=9, fontweight='bold')
+    axes[i].legend(fontsize=7)
+    axes[i].set_ylabel('')
+plt.suptitle('Distribuição das Variáveis – KDE com Mediana e Média', fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_kde.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 10 [markdown] ===
+#### Interpretação dos Gráficos KDE
+
+A análise das distribuições revela padrões importantes:
+
+- **Assimetria positiva (right-skew) acentuada** em `Cap_PTD_kVA`, `N_Clientes`, `PFolga_PTD`, `D_PTD`, `D_PTD_LED` e `Ganho_LED_PTD`: a maioria dos PTDs concentra-se em valores baixos, com uma cauda longa de PTDs urbanos de grande dimensão. A mediana é sistematicamente inferior à média, confirmando o skew.
+- **`Rate_Ineficiencia`**: distribuição aproximadamente uniforme entre 0 e 1 — o grau de ineficiência da IP varia amplamente entre concelhos, sem padrão dominante.
+- **`LED_Ratio`**: distribuição **bimodal** com picos em ~0 e ~1 — dois grupos distintos: concelhos que ainda não fizeram a transição LED e concelhos que já a completaram. A transição tende a ser feita de forma massiva por projeto municipal.
+- **`Util_Decimal`**: distribuição **multimodal** com picos em ~0,2, ~0,45 e ~0,79. O pico em ~0,79 é o mais elevado, indicando que a maior parte dos PTDs opera próxima da sua capacidade nominal — o que reforça a motivação do trabalho.
+
+
+=== CELL 11 [code] ===
+# --- Plot 2: Boxplots com eixo Y limitado + nota de outliers ---
+power_cols = ['Cap_PTD_kVA', 'Pot_Contratada_kVA', 'PFolga_PTD', 'D_PTD', 'D_PTD_LED', 'Ganho_LED_PTD']
+df_power = df[power_cols].dropna()
+df_power_scaled = pd.DataFrame(
+    StandardScaler().fit_transform(df_power),
+    columns=power_cols
+)
+
+fig, ax = plt.subplots(figsize=(13, 6))
+df_power_scaled.boxplot(ax=ax, vert=True,
+                         boxprops=dict(color='steelblue'),
+                         medianprops=dict(color='red', lw=2),
+                         whiskerprops=dict(color='steelblue'),
+                         flierprops=dict(marker='o', markersize=2, alpha=0.2, color='gray'))
+
+# Limitar eixo Y aos percentis 1-99 para focar na distribuição principal
+y_min = df_power_scaled.quantile(0.01).min() - 0.3
+y_max = df_power_scaled.quantile(0.99).max() + 0.3
+ax.set_ylim(y_min, y_max)
+
+# Anotar % de outliers por variável (acima do whisker superior)
+for i, col in enumerate(power_cols, start=1):
+    q1 = df_power_scaled[col].quantile(0.25)
+    q3 = df_power_scaled[col].quantile(0.75)
+    iqr = q3 - q1
+    n_out = (df_power_scaled[col] > q3 + 1.5 * iqr).sum()
+    pct_out = n_out / len(df_power_scaled) * 100
+    ax.text(i, y_max - 0.1, f'{pct_out:.1f}%\noutliers',
+            ha='center', va='top', fontsize=8, color='gray')
+
+ax.axhline(0, color='gray', linestyle='--', lw=0.8, alpha=0.6)
+ax.set_title('Boxplots – Variáveis de Potência (standardizadas, eixo limitado ao P1–P99)',
+             fontsize=12, fontw
+
+=== CELL 12 [markdown] ===
+#### Interpretação dos Boxplots de Potência (standardizados)
+
+Os boxplots mostram todas as variáveis de potência em escala Z-score, permitindo comparação directa:
+
+- **Caixas IQR sistematicamente abaixo de zero**: após standardização, a *média* é zero mas a *mediana* é negativa porque a distribuição é right-skewed — a maioria dos PTDs tem capacidade/folga baixa, com poucos PTDs de grande porte a elevar a média.
+- **Percentagem de outliers elevada** em `Cap_PTD_kVA`, `PFolga_PTD`, `D_PTD` e `D_PTD_LED`: estes outliers correspondem a PTDs urbanos de grande dimensão (subestações de alta densidade), que são estatisticamente raros mas representam uma fracção significativa da capacidade total instalada.
+- **`Ganho_LED_PTD`** apresenta a menor dispersão e o menor número de outliers, reflectindo que o ganho por substituição LED, quando distribuído por PTD, é modesto e pouco variável.
+
+
+=== CELL 13 [code] ===
+# --- Plot 3: Histograma específico para LED_Ratio e Util_Decimal (bimodal/multimodal) ---
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# LED_Ratio – bimodal
+axes[0].hist(df['LED_Ratio'].dropna(), bins=50, color='steelblue', edgecolor='white', alpha=0.8)
+axes[0].set_title('LED_Ratio – Distribuição Bimodal', fontsize=11, fontweight='bold')
+axes[0].set_xlabel('LED_Ratio')
+axes[0].set_ylabel('Frequência')
+axes[0].axvline(0.5, color='red', linestyle='--', lw=1.5, label='limiar 0.5')
+axes[0].legend()
+
+# Util_Decimal – multimodal (origem das 3 classes)
+axes[1].hist(df['Util_Decimal'].dropna(), bins=60, color='steelblue', edgecolor='white', alpha=0.8)
+q33 = df['Util_Decimal'].quantile(1/3)
+q66 = df['Util_Decimal'].quantile(2/3)
+axes[1].axvline(q33, color='green', linestyle='--', lw=1.5, label=f'Q33={q33:.2f} (baixo|médio)')
+axes[1].axvline(q66, color='red',   linestyle='--', lw=1.5, label=f'Q66={q66:.2f} (médio|alto)')
+axes[1].set_title('Util_Decimal – Fronteiras de utilizRede', fontsize=11, fontweight='bold')
+axes[1].set_xlabel('Util_Decimal')
+axes[1].set_ylabel('Frequência')
+axes[1].legend()
+
+plt.suptitle('Variáveis com Estrutura Discreta Relevante', fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_bimodal.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 14 [markdown] ===
+#### Interpretação — LED_Ratio, Util_Decimal e Viabilidade
+
+- **`LED_Ratio` bimodal**: confirma a dicotomia entre concelhos ainda em tecnologia convencional e concelhos já totalmente convertidos para LED. Poucos concelhos estão em fase intermédia de transição.
+- **`Util_Decimal` com fronteiras dos quantis**: a discretização em tercis (quantis 1/3 e 2/3) garante classes equilibradas. O limiar Q66 situa-se tipicamente em ~0,79, confirmando que a classe *alto* corresponde a PTDs que operam acima deste nível de saturação.
+- **Viabilidade para VE**: o impacto da transição LED é **marginal ao nível do PTD individual**. Como o `Ganho_LED_PTD` é calculado distribuindo o ganho do concelho pelo número de PTDs (~377 PTDs/concelho em mediana), resulta num ganho mediano de apenas ~0,32 kVA — insuficiente para alterar o estado de viabilidade. Apenas **1 PTD** muda de inviável para viável com LED. Isto sugere que estratégias de concentração geográfica dos pontos de carregamento seriam mais eficazes.
+
+
+=== CELL 15 [code] ===
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Esquerda: Ganho_LED_PTD vs PFolga_PTD (escala comparativa)
+axes[0].boxplot(
+    [df['Ganho_LED_PTD'].dropna(), df['PFolga_PTD'].dropna()],
+    labels=['Ganho_LED_PTD', 'PFolga_PTD'],
+    boxprops=dict(color='steelblue'),
+    medianprops=dict(color='red', lw=2),
+    flierprops=dict(marker='o', markersize=2, alpha=0.2, color='gray')
+)
+axes[0].set_ylabel('kVA')
+axes[0].set_title('Ganho LED vs Folga de Rede por PTD', fontweight='bold')
+axes[0].set_yscale('log')  # log para ver ambas na mesma escala
+
+# Direita: D_PTD vs D_PTD_LED (diferença real)
+diff = df['D_PTD_LED'] - df['D_PTD']
+axes[1].hist(diff.dropna(), bins=60, color='steelblue', edgecolor='white', alpha=0.8)
+axes[1].axvline(diff.median(), color='red', linestyle='--', lw=1.5,
+                label=f'mediana = {diff.median():.2f} kVA')
+axes[1].set_xlabel('D_PTD_LED − D_PTD (kVA)')
+axes[1].set_ylabel('Frequência')
+axes[1].set_title('Impacto real do LED no Saldo de Viabilidade', fontweight='bold')
+axes[1].legend()
+
+plt.suptitle('Análise de Viabilidade – Impacto Marginal da Transição LED', 
+             fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_viabilidade.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print(f"Diferença mediana D_PTD_LED - D_PTD: {diff.median():.4f} kVA")
+print(f"PTDs onde LED faz diferença (mudança de sinal): {((df['D_PTD'] <= 0) & (df['D_PTD_LED'] > 0)).sum()}")
+
+=== CELL 16 [markdown] ===
+### 4.1.3 - Pré-processamento
+
+=== CELL 17 [code] ===
+# Remover colunas não adequadas para modelação
+# Justificação de cada exclusão:
+# - Identificadores/coordenadas: sem poder preditivo
+# - 'Potência instalada [kVA]': redundante com Cap_PTD_kVA
+# - 'Nível de Utilização [%]': string; Util_Decimal é a versão numérica
+# - Pot_Geracao_kW e derivadas: 97.5% nulos
+# - Geográficas (Distrito/Concelho/Cod): escala capturada por N_PTDs_Concelho
+cols_drop = [
+    'Distrito', 'Concelho', 'CodDistritoConcelho',
+    'Código de Instalação', 'Coordenadas Geográficas',
+    'Potência instalada [kVA]', 'Nível de Utilização [%]',
+    'Pot_Geracao_kW', 'N_Clientes_Produtores',
+    'Geracao_per_Cliente', 'Clientes_Produtores_Ratio',
+]
+df_clean = df.drop(columns=cols_drop).copy()
+
+# Imputação de Pot_Contratada_kVA (~29% nulos) pela mediana por Tipo Construtivo
+# Justificação: PTDs do mesmo tipo têm perfis de contratação semelhantes
+for col in ['Pot_Contratada_kVA', 'PContratada_per_Cliente']:
+    df_clean[col] = df_clean.groupby('Tipo Construtivo')[col].transform(
+        lambda x: x.fillna(x.median())
+    )
+
+# Remover PTDs sem nível de utilização (4.3% do dataset)
+df_clean = df_clean.dropna(subset=['PFolga_PTD', 'Util_Decimal'])
+
+print('Dimensão após limpeza:', df_clean.shape)
+print('Nulos restantes:', df_clean.isnull().sum().sum())
+
+=== CELL 18 [markdown] ===
+#### Decisões de Pré-processamento
+
+| Variável / Grupo | Decisão | Justificação |
+|---|---|---|
+| Identificadores, coordenadas, `Potência instalada [kVA]` | **Excluídas** | Sem poder preditivo; `Cap_PTD_kVA` é a versão numérica equivalente |
+| `Nível de Utilização [%]` (string) | **Excluída** | `Util_Decimal` é a versão numérica — usar ambas seria redundante |
+| `Pot_Geracao_kW` e derivadas | **Excluídas** | 97,5% de nulos |
+| `Distrito`, `Concelho`, `CodDistritoConcelho` | **Excluídas** | Escala geográfica capturada por `N_PTDs_Concelho` |
+| `Pot_Contratada_kVA` e `PContratada_per_Cliente` | **Imputação** pela mediana por `Tipo Construtivo` (~29% nulos) |
+| `Util_Decimal`, `D_PTD`, `D_PTD_LED` | **Excluídas das features** | Data leakage: derivadas directas de `PFolga_PTD` (target da regressão) e de `Util_Decimal` (base da classificação) |
+| `PVE_PTD` | **Excluída das features** | Constante (13,2 kVA) — variância zero, sem poder preditivo |
+
+
+=== CELL 19 [code] ===
+# Encoding de Tipo Construtivo
+le = LabelEncoder()
+df_clean['Tipo_Construtivo_enc'] = le.fit_transform(df_clean['Tipo Construtivo'])
+print('Encoding de Tipo Construtivo:')
+for i, cls in enumerate(le.classes_):
+    print(f'  {i} -> {cls}')
+
+=== CELL 20 [code] ===
+# Seleção de features para modelação
+# EXCLUÍDAS por data leakage:
+#   Util_Decimal  -> é a fonte de PFolga_PTD e utilizRede
+#   D_PTD         -> calculado a partir de PFolga_PTD
+#   D_PTD_LED     -> idem
+# INCLUÍDAS: todas as variáveis do TP1 relevantes (Rate_Ineficiencia, Ganho_LED_PTD, PVE_PTD)
+
+FEATURES = [
+    'Cap_PTD_kVA', 'Pot_Contratada_kVA', 'N_Clientes',
+    'P_IP_Total', 'P_IP_Inef', 'Rate_Ineficiencia', 'LED_Ratio',
+    'N_Luminarias', 'N_Lampadas', 'N_PTDs_Concelho',
+    'IP_per_PTD', 'IP_Inef_per_PTD', 'Ganho_LED_PTD',
+    'Cap_per_Cliente', 'PContratada_per_Cliente',
+    'Tipo_Construtivo_enc'
+]
+
+X = df_clean[FEATURES].values
+y_reg = df_clean['PFolga_PTD'].values
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+print(f'Features ({len(FEATURES)}): {FEATURES}')
+print(f'Shape: X={X.shape}, y={y_reg.shape}')
+
+=== CELL 21 [code] ===
+# --- Subsample opcional para acelerar testes ---
+if USE_SAMPLE:
+    df_clean = (
+        df_clean
+        .sample(n=SAMPLE_SIZE, random_state=SEED)
+        .reset_index(drop=True)
+    )
+    X = df_clean[FEATURES].values
+    y_reg = df_clean['PFolga_PTD'].values
+    X_scaled = scaler.fit_transform(X)
+    print(f"[USE_SAMPLE=True] df_clean subamostrado para {len(df_clean)} registos")
+else:
+    print(f"[USE_SAMPLE=False] Dataset completo | {len(df_clean)} registos")
+
+print(f'X={X.shape}, y_reg={y_reg.shape}')
+
