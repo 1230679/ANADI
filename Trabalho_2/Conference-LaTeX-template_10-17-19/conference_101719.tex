@@ -228,7 +228,23 @@ modelos de classifica\c{c}\~ao desenvolvidos para prever a vari\'avel
 \texttt{utilizRede} (\textit{baixo}, \textit{m\'edio}, \textit{alto}),
 avaliados por valida\c{c}\~ao cruzada de 10~\textit{folds} com o mesmo
 objeto \texttt{KFold} partilhado.
- 
+
+\subsection{Resultados da Regressão para Folga de Rede (\texttt{PFolga\_PTD})}
+\label{subsec:resultados_regressao}
+
+A previsão da variável contínua \texttt{PFolga\_PTD} revelou comportamentos muito distintos entre os modelos. A Regressão Linear Simples, baseada unicamente na capacidade instalada (\texttt{Cap\_PTD\_kVA}), alcançou um $R^2$ de 0.83. Contudo, ao expandir para um modelo de Regressão Múltipla com as 16 \textit{features}, não se verificaram ganhos substanciais de desempenho.
+
+A Árvore de Regressão provou ser o modelo mais eficaz, minimizando o erro (MAE) sem assumir pressupostos lineares estritos que, neste *dataset*, foram violados pelas caudas longas da distribuição. As Redes Neuronais, apesar das regularizações, apresentaram dificuldades em estabilizar o erro quadrático para os *outliers* de alta capacidade.
+
+Para analisar a eficiência do treino na regressão, avaliaram-se as curvas de aprendizagem. A Fig.~\ref{fig:learning_curves_reg} ilustra as curvas da Árvore de Regressão otimizada. Nota-se que o erro de treino permanece baixo, enquanto a curva de validação estabiliza em torno das 4000 amostras, não revelando sinais de \textit{overfitting} severo graças ao controlo da profundidade da árvore.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{../fig_lc_reg.png}
+\caption{Curvas de Aprendizagem para o modelo de Árvore de Regressão. A estabilização do erro de validação (MSE) indica uma parametrização adequada face ao volume de dados de treino.}
+\label{fig:learning_curves_reg}
+\end{figure}
+
 \subsection{Compara\c{c}\~ao Global dos Modelos}
  
 A Tabela~\ref{tab:classificacao_global} sintetiza as m\'etricas globais
@@ -474,6 +490,15 @@ confirmando que os mecanismos de regulariza\c{c}\~ao (\textit{dropout} e
 $L_2$) e o \textit{early stopping} com \texttt{patience}~$=~20$
 contribu\'iram para uma converg\^encia est\'avel.
  
+A eficiência do treino das redes neuronais pode ser adicionalmente confirmada pela análise das curvas de entropia cruzada (\textit{Cross-Entropy Loss}) por época (Fig.~\ref{fig:nn_loss_clf}). A ausência de divergência entre a perda de treino e a perda de validação comprova que a arquitetura escolhida foi capaz de extrair os padrões representativos sem memorizar o ruído inerente aos \textit{outliers} urbanos.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{../fig_nn_loss_clf.png}
+\caption{Curva de Perda (Loss) do treino da Rede Neuronal para classificação ao longo das épocas, evidenciando uma convergência suave propiciada pelas técnicas de regularização.}
+\label{fig:nn_loss_clf}
+\end{figure}
+
 As \'Arvores de Decis\~ao com profundidade ilimitada (\texttt{max\_depth~=~None}),
 testadas durante a otimiza\c{c}\~ao em grelha, apresentaram o padr\~ao
 cl\'assico de \textit{overfitting} severo: \textit{Accuracy} de treino

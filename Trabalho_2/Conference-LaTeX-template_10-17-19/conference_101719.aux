@@ -38,34 +38,39 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-G}}Tratamento do Desequilíbrio de Classes e SMOTE}{4}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {V}Resultados e Discuss\~ao}{4}{}\protected@file@percent }
 \newlabel{sec:resultados}{{V}{4}{}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Compara\c {c}\~ao Global dos Modelos}{4}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Desempenho Global dos Modelos de Classifica\c {c}\~ao  (10-\textit  {fold} CV, m\'etricas \textit  {weighted})}}{4}{}\protected@file@percent }
-\newlabel{tab:classificacao_global}{{IV}{4}{}{table.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Otimiza\c {c}\~ao do hiperpar\^ametro~$K$ no KNN. O valor \'otimo $K=20$ maximiza a \textit  {Accuracy} m\'edia nos 10~\textit  {folds}; valores superiores introduzem vi\'es progressivo.}}{5}{}\protected@file@percent }
-\newlabel{fig:knn_k}{{3}{5}{}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Teste Estat\'istico entre os Dois Melhores Modelos}{5}{}\protected@file@percent }
-\newlabel{subsec:teste_estat}{{\mbox  {V-B}}{5}{}{subsection.5.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}An\'alise por Classe -- Matriz de Confus\~ao}{5}{}\protected@file@percent }
-\newlabel{subsec:por_classe}{{\mbox  {V-C}}{5}{}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Resultados da Regressão para Folga de Rede (\texttt  {PFolga\_PTD})}{4}{}\protected@file@percent }
+\newlabel{subsec:resultados_regressao}{{\mbox  {V-A}}{4}{}{subsection.5.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Curvas de Aprendizagem para o modelo de Árvore de Regressão. A estabilização do erro de validação (MSE) indica uma parametrização adequada face ao volume de dados de treino.}}{5}{}\protected@file@percent }
+\newlabel{fig:learning_curves_reg}{{3}{5}{}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Compara\c {c}\~ao Global dos Modelos}{5}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Desempenho Global dos Modelos de Classifica\c {c}\~ao  (10-\textit  {fold} CV, m\'etricas \textit  {weighted})}}{5}{}\protected@file@percent }
+\newlabel{tab:classificacao_global}{{IV}{5}{}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Teste Estat\'istico entre os Dois Melhores Modelos}{5}{}\protected@file@percent }
+\newlabel{subsec:teste_estat}{{\mbox  {V-C}}{5}{}{subsection.5.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Otimiza\c {c}\~ao do hiperpar\^ametro~$K$ no KNN. O valor \'otimo $K=20$ maximiza a \textit  {Accuracy} m\'edia nos 10~\textit  {folds}; valores superiores introduzem vi\'es progressivo.}}{5}{}\protected@file@percent }
+\newlabel{fig:knn_k}{{4}{5}{}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}An\'alise por Classe -- Matriz de Confus\~ao}{5}{}\protected@file@percent }
+\newlabel{subsec:por_classe}{{\mbox  {V-D}}{5}{}{subsection.5.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces M\'etricas por Classe -- Todos os Modelos}}{5}{}\protected@file@percent }
 \newlabel{tab:por_classe}{{V}{5}{}{table.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Matriz de Confus\~ao da \'Arvore de Decis\~ao ($d=7$), obtida por \textit  {cross\_val\_predict} com 10~\textit  {folds}. A classe \textit  {m\'edio} acumula o maior n\'umero de erros, com 1\,473 PTDs erroneamente atribuídos \`a classe \textit  {baixo}.}}{5}{}\protected@file@percent }
-\newlabel{fig:confusion_matrix}{{4}{5}{}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Import\^ancia das Vari\'aveis}{6}{}\protected@file@percent }
-\newlabel{subsec:feat_imp}{{\mbox  {V-D}}{6}{}{subsection.5.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Import\^ancia das vari\'aveis na \'Arvore de Decis\~ao (\textit  {Gini impurity}). \texttt  {Cap\_per\_Cliente} e \texttt  {PContratada\_per\_Cliente} concentram $\approx $89\% da import\^ancia total; todas as vari\'aveis de Ilumina\c {c}\~ao P\'ublica apresentam contributo residual.}}{6}{}\protected@file@percent }
-\newlabel{fig:feat_imp_clf}{{5}{6}{}{figure.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Curvas de Aprendizagem}{6}{}\protected@file@percent }
-\newlabel{subsec:lc}{{\mbox  {V-E}}{6}{}{subsection.5.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Curvas de Aprendizagem dos modelos SVM~(RBF) e KNN~($k=20$). O SVM mostra convers\~ao eficiente sem \textit  {overfitting} persistente; o KNN atinge plateau prematuro e mant\'em gap treino/valida\c {c}\~ao est\'avel, indicando limita\c {c}\~ao estrutural do algoritmo.}}{6}{}\protected@file@percent }
-\newlabel{fig:learning_curves_clf}{{6}{6}{}{figure.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Limita\c {c}\~oes e Trabalho Futuro}{6}{}\protected@file@percent }
-\newlabel{sec:limitacoes}{{VI}{6}{}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Limita\c {c}\~oes}{6}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Matriz de Confus\~ao da \'Arvore de Decis\~ao ($d=7$), obtida por \textit  {cross\_val\_predict} com 10~\textit  {folds}. A classe \textit  {m\'edio} acumula o maior n\'umero de erros, com 1\,473 PTDs erroneamente atribuídos \`a classe \textit  {baixo}.}}{6}{}\protected@file@percent }
+\newlabel{fig:confusion_matrix}{{5}{6}{}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Import\^ancia das Vari\'aveis}{6}{}\protected@file@percent }
+\newlabel{subsec:feat_imp}{{\mbox  {V-E}}{6}{}{subsection.5.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Import\^ancia das vari\'aveis na \'Arvore de Decis\~ao (\textit  {Gini impurity}). \texttt  {Cap\_per\_Cliente} e \texttt  {PContratada\_per\_Cliente} concentram $\approx $89\% da import\^ancia total; todas as vari\'aveis de Ilumina\c {c}\~ao P\'ublica apresentam contributo residual.}}{6}{}\protected@file@percent }
+\newlabel{fig:feat_imp_clf}{{6}{6}{}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Curvas de Aprendizagem}{6}{}\protected@file@percent }
+\newlabel{subsec:lc}{{\mbox  {V-F}}{6}{}{subsection.5.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Curvas de Aprendizagem dos modelos SVM~(RBF) e KNN~($k=20$). O SVM mostra convers\~ao eficiente sem \textit  {overfitting} persistente; o KNN atinge plateau prematuro e mant\'em gap treino/valida\c {c}\~ao est\'avel, indicando limita\c {c}\~ao estrutural do algoritmo.}}{6}{}\protected@file@percent }
+\newlabel{fig:learning_curves_clf}{{7}{6}{}{figure.7}{}}
 \citation{b6}
 \citation{b7}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Curva de Perda (Loss) do treino da Rede Neuronal para classificação ao longo das épocas, evidenciando uma convergência suave propiciada pelas técnicas de regularização.}}{7}{}\protected@file@percent }
+\newlabel{fig:nn_loss_clf}{{8}{7}{}{figure.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Limita\c {c}\~oes e Trabalho Futuro}{7}{}\protected@file@percent }
+\newlabel{sec:limitacoes}{{VI}{7}{}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Limita\c {c}\~oes}{7}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Trabalho Futuro}{7}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclus\~ao}{7}{}\protected@file@percent }
 \bibcite{b1}{1}
 \bibcite{b2}{2}
 \bibcite{b3}{3}
@@ -74,5 +79,6 @@
 \bibcite{b6}{6}
 \bibcite{b7}{7}
 \bibcite{b8}{8}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclus\~ao}{8}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{References}{8}{}\protected@file@percent }
 \gdef \@abspage@last{8}
