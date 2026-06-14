@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.19)  14 JUN 2026 19:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.19)  14 JUN 2026 21:14
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -611,149 +611,134 @@ Underfull \hbox (badness 7326) in paragraph at lines 187--188
  []
 
 
-Overfull \hbox (54.08284pt too wide) in paragraph at lines 194--203
- [][] 
- []
-
-
-Underfull \hbox (badness 3895) in paragraph at lines 214--215
+Underfull \hbox (badness 3895) in paragraph at lines 216--217
 \OT1/ptm/m/n/10 eu-clid-i-anas ex-igem padroniza[][]ao pr[]evia, dado que
  []
 
 
-Underfull \hbox (badness 8038) in paragraph at lines 215--216
+Underfull \hbox (badness 8038) in paragraph at lines 217--218
 []\OT1/ptm/b/n/10 Rede Neu-ronal\OT1/ptm/m/n/10 : avali-ada por 10-\OT1/ptm/m/it/10 fold \OT1/ptm/m/n/10 CV com
  []
 
 
-Underfull \hbox (badness 6978) in paragraph at lines 215--216
+Underfull \hbox (badness 6978) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 fun[][]ao de perda \OT1/pcr/m/n/10 categorical_crossentropy
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 215--216
+Underfull \hbox (badness 10000) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 e ativa[][]ao \OT1/pcr/m/n/10 softmax \OT1/ptm/m/n/10 na ca-mada de sa[]^^Pda.
  []
 
 
-Underfull \hbox (badness 3919) in paragraph at lines 215--216
+Underfull \hbox (badness 3919) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 Foram tes-tadas tr[]es configura[][]oes an[]alogas []as da
  []
 
 
-Underfull \hbox (badness 2318) in paragraph at lines 215--216
+Underfull \hbox (badness 2318) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 Tabela III[] (Shal-low [64,32]/\OT1/ptm/m/it/10 dropout \OT1/ptm/m/n/10 20%/LR $\OT1/cmr/m/n/10 10[]$\OT1/ptm/m/n/10 ;
  []
 
 
-Underfull \hbox (badness 6944) in paragraph at lines 215--216
+Underfull \hbox (badness 6944) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 Medium [128,64,32]/\OT1/ptm/m/it/10 dropout \OT1/ptm/m/n/10 20%/LR $\OT1/cmr/m/n/10 10[]$\OT1/ptm/m/n/10 ; Deep
  []
 
 
-Underfull \hbox (badness 7344) in paragraph at lines 215--216
+Underfull \hbox (badness 7344) in paragraph at lines 217--218
 \OT1/ptm/m/n/10 [256,128,64,32]/\OT1/ptm/m/it/10 dropout \OT1/ptm/m/n/10 30%/LR $\OT1/cmr/m/n/10 5 \OMS/cmsy/m/n/10 ^^B \OT1/cmr/m/n/10 10[]$\OT1/ptm/m/n/10 ), com
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 232--232
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
  \OT1/ptm/m/it/10 A. Re-sul-ta-dos da Regress[]ao para Folga de Rede
  []
 
 
-Underfull \hbox (badness 3209) in paragraph at lines 235--236
+Underfull \hbox (badness 3209) in paragraph at lines 237--238
 []\OT1/ptm/m/n/10 A pre-vis[]ao da vari[]avel cont[]^^Pnua \OT1/pcr/m/n/10 PFolga_PTD \OT1/ptm/m/n/10 rev-
  []
 
 <../fig_lc_reg.png, id=36, 1004.0712pt x 356.532pt>
 File: ../fig_lc_reg.png Graphic file (type png)
 <use ../fig_lc_reg.png>
-Package pdftex.def Info: ../fig_lc_reg.png  used on input line 243.
+Package pdftex.def Info: ../fig_lc_reg.png  used on input line 245.
 (pdftex.def)             Requested size: 252.0pt x 89.48094pt.
 [4]
-Overfull \hbox (31.24825pt too wide) in paragraph at lines 261--271
- [][] 
- []
-
-
-Underfull \hbox (badness 1365) in paragraph at lines 273--280
+Underfull \hbox (badness 1365) in paragraph at lines 277--284
 []\OT1/ptm/m/n/10 O SVM com \OT1/ptm/m/it/10 ker-nel \OT1/ptm/m/n/10 RBF obt[]em a mel-hor \OT1/ptm/m/it/10 Ac-cu-racy
  []
 
 <../fig_knn_k.png, id=42, 570.4512pt x 279.9258pt>
 File: ../fig_knn_k.png Graphic file (type png)
 <use ../fig_knn_k.png>
-Package pdftex.def Info: ../fig_knn_k.png  used on input line 291.
+Package pdftex.def Info: ../fig_knn_k.png  used on input line 295.
 (pdftex.def)             Requested size: 206.64185pt x 101.4011pt.
 [5 <../fig_lc_reg.png> <../fig_knn_k.png>]
 <../fig_confusion_matrix.png, id=49, 443.7378pt x 424.4658pt>
 File: ../fig_confusion_matrix.png Graphic file (type png)
 <use ../fig_confusion_matrix.png>
-Package pdftex.def Info: ../fig_confusion_matrix.png  used on input line 396.
-(pdftex.def)             Requested size: 181.4403pt x 173.55928pt.
+Package pdftex.def Info: ../fig_confusion_matrix.png  used on input line 400.
+(pdftex.def)             Requested size: 151.20154pt x 144.63382pt.
 
-Underfull \hbox (badness 1354) in paragraph at lines 407--414
+Underfull \hbox (badness 1354) in paragraph at lines 411--418
 \OT1/ptm/m/n/10 de De-cis[]ao ($\OML/cmm/m/it/10 d \OT1/cmr/m/n/10 = 7$\OT1/ptm/m/n/10 ). A vari[]avel \OT1/pcr/m/n/10 Cap_per_Cliente
  []
 
 <../fig_feat_imp_clf.png, id=50, 642.7212pt x 497.2176pt>
 File: ../fig_feat_imp_clf.png Graphic file (type png)
 <use ../fig_feat_imp_clf.png>
-Package pdftex.def Info: ../fig_feat_imp_clf.png  used on input line 417.
-(pdftex.def)             Requested size: 252.0pt x 194.9459pt.
+Package pdftex.def Info: ../fig_feat_imp_clf.png  used on input line 421.
+(pdftex.def)             Requested size: 201.60077pt x 155.95673pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--422
+Underfull \hbox (badness 10000) in paragraph at lines 426--426
 []\OT1/ptm/m/n/10 Fig. 6: |Im-port[]ancia das vari[]aveis na []Arvore de
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--422
+Underfull \hbox (badness 10000) in paragraph at lines 426--426
 \OT1/ptm/m/n/10 De-cis[]ao (\OT1/ptm/m/it/10 Gini im-pu-rity\OT1/ptm/m/n/10 ). \OT1/pcr/m/n/10 Cap_per_Cliente \OT1/ptm/m/n/10 e
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--422
+Underfull \hbox (badness 10000) in paragraph at lines 426--426
 \OT1/pcr/m/n/10 PContratada_per_Cliente \OT1/ptm/m/n/10 con-cen-tram $\OMS/cmsy/m/n/10 ^^Y$\OT1/ptm/m/n/10 89% da
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 436--445
+Underfull \hbox (badness 10000) in paragraph at lines 440--449
 []\OT1/ptm/m/n/10 Todas as vari[]aveis de Ilumina[][]ao P[]ublica
  []
 
 <../fig_lc_clf.png, id=51, 1004.0712pt x 356.532pt>
 File: ../fig_lc_clf.png Graphic file (type png)
 <use ../fig_lc_clf.png>
-Package pdftex.def Info: ../fig_lc_clf.png  used on input line 457.
+Package pdftex.def Info: ../fig_lc_clf.png  used on input line 461.
 (pdftex.def)             Requested size: 252.0pt x 89.48094pt.
 [6 <../fig_confusion_matrix.png> <../fig_feat_imp_clf.png> <../fig_lc_clf.png>]
 <../fig_nn_loss_clf.png, id=58, 1293.1512pt x 357.0138pt>
 File: ../fig_nn_loss_clf.png Graphic file (type png)
 <use ../fig_nn_loss_clf.png>
-Package pdftex.def Info: ../fig_nn_loss_clf.png  used on input line 497.
+Package pdftex.def Info: ../fig_nn_loss_clf.png  used on input line 501.
 (pdftex.def)             Requested size: 201.60077pt x 55.65796pt.
 
-Underfull \hbox (badness 3746) in paragraph at lines 502--507
+Underfull \hbox (badness 3746) in paragraph at lines 506--511
 []\OT1/ptm/m/n/10 As []Arvores de De-cis[]ao com pro-fun-di-dade ilim-i-tada
  []
 
 
-Underfull \hbox (badness 4621) in paragraph at lines 513--522
+Underfull \hbox (badness 4621) in paragraph at lines 517--526
 []\OT1/ptm/b/n/10 Vari[]avel tar-get com baixa resolu[][]ao. \OT1/ptm/m/n/10 A vari[]avel
  []
 
 
-Underfull \hbox (badness 1629) in paragraph at lines 585--589
+Underfull \hbox (badness 1629) in paragraph at lines 589--593
 []\OT1/ptm/b/n/10 Estratifica[][]ao dos mod-e-los por tipolo-gia de PTD.
  []
 
 [7 <../fig_nn_loss_clf.png>]
-Underfull \hbox (badness 1377) in paragraph at lines 598--604
-[]\OT1/ptm/m/n/10 Este tra-balho demon-strou a apli-ca-bil-i-dade de t[]ecnicas
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 701--704
+Underfull \hbox (badness 10000) in paragraph at lines 733--736
 []\OT1/ptm/m/n/8 e-REDES, ``Por-tal de Da-dos Aber-tos,'' [On-line]. Avail-able:
  []
 
@@ -783,7 +768,7 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  67i,14n,77p,2074b,485s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/courier/ucrro8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on conference_101719.pdf (8 pages, 832661 bytes).
+Output written on conference_101719.pdf (8 pages, 834680 bytes).
 PDF statistics:
  151 PDF objects out of 1000 (max. 8388607)
  82 compressed objects within 1 object stream

@@ -191,6 +191,7 @@ Para a previsão de \texttt{PFolga\_PTD}, foram desenvolvidos os seguintes model
 \caption{Configurações da Rede Neuronal --- Regressão}
 \label{tab:nn_reg}
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \hline
 \textbf{Config} & \textbf{Camadas} & \textbf{Neurónios} & \textbf{Regulariz.} & \textbf{LR} \\
@@ -199,7 +200,8 @@ Shallow & 2 & [64, 32]          & Nenhuma              & $10^{-3}$ \\
 Medium  & 3 & [128, 64, 32]     & \textit{Dropout} 20\%       & $10^{-3}$ \\
 Deep+L2 & 4 & [256, 128, 64, 32]& \textit{Dropout} 30\% + $L_2$ ($10^{-4}$) & $5\times10^{-4}$ \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 O valor de \texttt{patience=20} foi adotado após observar que \texttt{patience=10} interrompia prematuramente o treino das configurações com \textit{dropout}/$L_2$, antes da convergência genuína, devido a oscilações na \texttt{val\_loss} induzidas pela regularização. A \textit{learning rate} da configuração Deep+L2 foi reduzida para $5\times10^{-4}$, dado que redes mais profundas com $L_2$ apresentam superfícies de perda mais complexas, beneficiando de passos de gradiente menores.
@@ -258,6 +260,7 @@ resultados s\~ao expressos como m\'edia~$\pm$~desvio padr\~ao sobre os
 \label{tab:classificacao_global}
 \centering
 \renewcommand{\arraystretch}{1.2}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Modelo} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} \\
@@ -267,7 +270,8 @@ SVM (RBF)       & $0.6903_{\pm.010}$ & $0.6704_{\pm.009}$ & $0.6903_{\pm.010}$ &
 KNN ($k=20$)    & $0.6446_{\pm.010}$ & $0.6163_{\pm.012}$ & $0.6446_{\pm.010}$ & $0.6180_{\pm.012}$ \\
 NN (Config2)    & $0.6217_{\pm.020}$ & $0.5888_{\pm.025}$ & $0.6217_{\pm.020}$ & $0.5498_{\pm.031}$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
  
 O SVM com \textit{kernel} RBF obt\'em a melhor \textit{Accuracy}
@@ -393,7 +397,7 @@ adequada para VE.
  
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.72\linewidth]{../fig_confusion_matrix.png}
+\includegraphics[width=0.6\linewidth]{../fig_confusion_matrix.png}
 \caption{Matriz de Confus\~ao da \'Arvore de Decis\~ao ($d=7$), obtida
 por \textit{cross\_val\_predict} com 10~\textit{folds}.
 A classe \textit{m\'edio} acumula o maior n\'umero de
@@ -414,7 +418,7 @@ cerca de 19\%, e as restantes 14~features -- incluindo
  
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{../fig_feat_imp_clf.png}
+\includegraphics[width=0.8\linewidth]{../fig_feat_imp_clf.png}
 \caption{Import\^ancia das vari\'aveis na \'Arvore de Decis\~ao
 (\textit{Gini impurity}). \texttt{Cap\_per\_Cliente} e
 \texttt{PContratada\_per\_Cliente} concentram $\approx$89\% da
@@ -594,60 +598,88 @@ reintroduziria as vari\'aveis de IP como preditores efectivos, testando
 de forma mais rigorosa a hip\'otese central do trabalho.
  
 \section{Conclus\~ao}
- 
-Este trabalho demonstrou a aplicabilidade de t\'ecnicas de Aprendizagem
-Autom\'atica ao problema de previs\~ao do n\'ivel de ocupa\c{c}\~ao da
-rede el\'etrica ao n\'ivel dos Postos de Transforma\c{c}\~ao de
-Distribui\c{c}\~ao, descendo da escala de an\'alise agregada por
-concelho~(TP1) para a escala individual do PTD~($\approx69\,000$
-registos).
- 
-O principal achado \'e que, entre os quatro classificadores avaliados,
-a \textbf{\'Arvore de Decis\~ao com profundidade~7} constitui o modelo
-mais adequado ao contexto operacional, apesar de o SVM~(RBF) obter uma
-\textit{Accuracy} ligeiramente superior ($0.6903$ vs.\ $0.6884$). A
-vantagem estat\'istica do SVM n\~ao \'e significativa ($p = 0.503$,
-\textit{t-test} pareado com $\alpha = 0.05$), e a \'Arvore supera-o em
-F1 ponderado ($0.6773$ vs.\ $0.6668$), em \textit{Recall} na classe
-\textit{m\'edio} ($0.39$ vs.\ $0.30$) e em interpretabilidade, atributo
-indispens\'avel numa aplica\c{c}\~ao de planeamento de infraestrutura
-el\'etrica.
- 
-O segundo achado central \'e a \textbf{dificuldade persistente em
-prever a classe \textit{m\'edio}}. Todos os modelos apresentam
-\textit{Recall} n\~ao superior a $0.39$ nesta classe, consequência da
-natureza discreta de \texttt{Util\_Decimal} (apenas 6 valores distintos)
-e do consequente desequil\'ibrio estrutural das classes ($\approx51/25/24$\%).
-A matriz de confus\~ao revela que 1\,473 dos 3\,732~PTDs \textit{m\'edio}
-s\~ao erroneamente atribuídos \`a classe \textit{baixo}, representando
-um risco operacional real na prioriza\c{c}\~ao de locais para
-instala\c{c}\~ao de carregadores de VE.
- 
-O terceiro achado \'e a \textbf{irrelevância pr\'atica da taxa de
-inefici\^encia de ilumina\c{c}\~ao} na classifica\c{c}\~ao a n\'ivel
-individual do PTD. Todas as vari\'aveis de IP apresentam import\^ancia
-Gini pr\'oxima de zero na \'Arvore de Decis\~ao, e o ganho mediano da
-transi\c{c}\~ao LED por PTD ($\approx0.32$~kVA) \'e negligenci\'avel
-face \`a folga mediana de $\approx77$~kVA -- resultado que refor\c{c}a
-e aprofunda a conclus\~ao da primeira itera\c{c}\~ao do trabalho
-($R^2_{adj} = 6.4\%$ no modelo OLS ao n\'ivel do concelho).
- 
-A vari\'avel realmente determinante para o n\'ivel de ocupa\c{c}\~ao \'e
-a \textbf{capacidade por cliente} (\texttt{Cap\_per\_Cliente}, com 70\%
-da import\^ancia Gini), seguida da pot\^encia contratada por cliente
-(\texttt{PContratada\_per\_Cliente}, $\approx$19\%). Estas duas vari\'aveis
-capturam a rela\c{c}\~ao entre a infra-estrutura instalada e as
-necessidades reais dos utilizadores, que \'e o verdadeiro determinante
-do estado de ocupa\c{c}\~ao da rede.
- 
-Em suma, os modelos desenvolvidos constituem uma base promissora para
-apoiar decis\~oes de planeamento da infra-estrutura el\'etrica no
-contexto da transi\c{c}\~ao energ\'etica e da expans\~ao da mobilidade
-el\'etrica, com a ressalva de que melhorias substanciais no desempenho
-da classe \textit{m\'edio} requerem, prioritariamente, a aplica\c{c}\~ao
-de SMOTE e, a prazo, a recupera\c{c}\~ao dos valores cont\'inuos de
-\texttt{Util\_Decimal} em colabora\c{c}\~ao com a e-REDES.
- 
+
+Este trabalho completou a transi\c{c}\~ao metodol\'ogica iniciada no TP1
+-- de uma an\'alise de regress\~ao linear agregada ao n\'ivel do concelho
+($R^2_{adj} = 6.4\%$) para uma modelação biv\'ia ao n\'ivel do PTD
+individual ($\approx69\,000$ registos) -- abordando simultaneamente um
+problema de \textbf{regress\~ao} (prever a folga de pot\^encia dispon\'ivel
+\texttt{PFolga\_PTD}) e um problema de \textbf{classifica\c{c}\~ao} (prever
+o n\'ivel de ocupa\c{c}\~ao da rede \texttt{utilizRede}), com o objetivo
+final de suportar decis\~oes de integra\c{c}\~ao de infraestrutura de
+carregamento de ve\'iculos el\'etricos.
+
+No problema de regress\~ao, a Rede Neuronal Shallow emergiu como o modelo
+mais preciso (MAE~$= 32.05 \pm 0.81$~kVA, RMSE~$= 52.13$~kVA em
+10-\textit{fold} CV), confirmada como estatisticamente superior ao SVM
+linear (MAE~$= 33.22$, $p < 0.05$, \textit{t-test} pareado). A Regress\~ao
+Linear Simples, baseada unicamente em \texttt{Cap\_PTD\_kVA} ($r = 0.92$),
+estabeleceu a \textit{baseline} com MAE~$\approx 51$~kVA, evidenciando que
+a capacidade instalada do transformador \'e o fator estrutural dominante
+da folga de rede. A \'Arvore de Regress\~ao (MAE~$= 34.18$, $d = 7$) revelou
+robustez face aos \textit{outliers} de PTDs urbanos de grande porte --
+que violam os pressupostos de homoscedasticidade da regress\~ao linear --
+sem recorrer a transforma\c{c}\~oes do \textit{target}. O MAE residual de
+$\approx$32~kVA na melhor configura\c{c}\~ao reflete o teto informativo
+atual das \textit{features} dispon\'iveis: a forte assimetria positiva da
+distribui\c{c}\~ao de \texttt{PFolga\_PTD} e a aus\^encia de dados de
+gera\c{c}\~ao distribu\'ida limitam a precis\~ao absoluta independentemente
+do algoritmo adotado.
+
+No problema de classifica\c{c}\~ao, a \textbf{\'Arvore de Decis\~ao com
+profundidade~7} constitui o modelo mais adequado ao contexto operacional,
+apesar de o SVM~(RBF) registar \textit{Accuracy} marginalmente superior
+($0.6903$ vs.\ $0.6884$). O teste \textit{t} pareado ($t = 0.698$,
+$p = 0.503$, $\alpha = 0.05$) confirma que esta vantagem n\~ao \'e
+estat\'isticamente significativa. Os crit\'erios secund\'arios pendem
+inequivocamente para a \'Arvore: melhor F1 ponderado ($0.6773$ vs.\
+$0.6668$), melhor \textit{Recall} na classe \textit{m\'edio} ($0.39$ vs.\
+$0.30$) e interpretabilidade direta atrav\'es das regras de decis\~ao e
+das import\^ancias Gini -- atributos indispens\'aveis numa aplica\c{c}\~ao
+de planeamento de infraestrutura regulada.
+
+O \textbf{calcanhar de Aquiles} de todos os classificadores \'e a classe
+\textit{m\'edio}: nenhum modelo ultrapassa \textit{Recall}~$= 0.39$, e a
+matriz de confus\~ao da \'Arvore revela que 1\,473 dos 3\,732~PTDs
+\textit{m\'edio} s\~ao erroneamente sinalizados como \textit{baixo}. Numa
+aplica\c{c}\~ao operacional, estes falsos positivos traduzem-se em PTDs em
+``zona de aten\c{c}\~ao'' incorretamente identificados como aptos para
+receber carregadores de VE -- o risco operacional mais relevante do
+classificador. A causa-raiz \'e estrutural: \texttt{Util\_Decimal} assume
+apenas 6 valores distintos, tornando as fronteiras de decis\~ao
+artificialmente difusas e produzindo o desequil\'ibrio intr\'inseco de
+$\approx51/25/24$\% que penaliza sistematicamente a classe intermedi\'aria.
+
+A an\'alise de import\^ancia de \textit{features} confirma, de forma
+taxativa, que o verdadeiro determinante da ocupa\c{c}\~ao da rede \'e a
+\textbf{capacidade por cliente} (\texttt{Cap\_per\_Cliente}, 70\% da
+import\^ancia Gini), complementada pela pot\^encia contratada por cliente
+(\texttt{PContratada\_per\_Cliente}, $\approx$19\%). Em contraste, todas
+as vari\'aveis de Ilumina\c{c}\~ao P\'ublica apresentam import\^ancia
+Gini pr\'atica nula: o ganho mediano da transi\c{c}\~ao LED por PTD
+($\approx 0.32$~kVA) \'e negligenci\'avel face \`a folga mediana de
+$\approx 77$~kVA, alterando o estado de viabilidade de apenas 1~PTD em
+todo o \textit{dataset}. Esta conclus\~ao, que aprofunda e corrobora o
+resultado do TP1, imp\~oe uma reorienta\c{c}\~ao estrat\'egica: a
+moderniza\c{c}\~ao LED \'e politicamente relevante no plano da
+sustentabilidade energ\'etica global, mas insuficiente, por si s\'o,
+para criar folga de rede mensur\'avel ao n\'ivel do PTD individual que
+suporte a carga de um carregador t\'ipico de 22~kW.
+
+Os modelos aqui desenvolvidos constituem, em conjunto, um sistema de
+apoio \`a decis\~ao tecnicamente fundamentado para Operadores de Rede de
+Distribui\c{c}\~ao como a e-REDES: a regress\~ao quantifica a folga
+dispon\'ivel em cada PTD, e a classifica\c{c}\~ao prioriza os postos
+candidatos \`a instala\c{c}\~ao de infraestrutura de carregamento. A sua
+maturidade operacional plena depende, contudo, de dois passos futuros
+priorit\'arios -- a aplica\c{c}\~ao de SMOTE ao conjunto de treino de
+cada \textit{fold} para corrigir o \textit{Recall} catastr\'ofico na
+classe \textit{m\'edio}, e a recupera\c{c}\~ao dos valores cont\'inuos
+de \texttt{Util\_Decimal} em colabora\c{c}\~ao com a e-REDES -- sem os
+quais qualquer classficador enfrenta um limite estrutural intranspon\'ivel
+que compromete a fiabilidade das recomenda\c{c}\~oes para o planeamento
+da mobilidade el\'etrica em Portugal.
+
 \section*{Agradecimentos}
  
 Este trabalho foi desenvolvido com o apoio de ferramentas de

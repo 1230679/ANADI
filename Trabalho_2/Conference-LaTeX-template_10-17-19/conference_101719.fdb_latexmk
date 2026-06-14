@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1781461383.40388 "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Trabalho_2/Conference-LaTeX-template_10-17-19/conference_101719.tex" "conference_101719.pdf" "conference_101719" 1781461386.61599 0
+["pdflatex"] 1781468054.91975 "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Trabalho_2/Conference-LaTeX-template_10-17-19/conference_101719.tex" "conference_101719.pdf" "conference_101719" 1781468057.76697 0
   "../fig_bimodal.png" 1781092488.24108 74453 2ffcd41d5b22f76747b1bff0007a6009 ""
   "../fig_confusion_matrix.png" 1781451604.8393 36911 0442fd4c633fb94fe628da8a287560e5 ""
   "../fig_feat_imp_clf.png" 1781451604.84252 59699 dc6a20b90d41e594d9c12dd38af533a6 ""
@@ -9,7 +9,7 @@
   "../fig_nn_loss_clf.png" 1781451604.84887 117812 9cba63e9da3ee35617a80fe624af101a ""
   "../fig_outliers.png" 1781092488.27413 42166 4b52946288793da55d014c223ba3de46 ""
   "../fig_utilizRede.png" 1781451604.85313 35008 2488146f63b5b221bbf998f9b82aed26 ""
-  "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Trabalho_2/Conference-LaTeX-template_10-17-19/conference_101719.tex" 1781461379.95766 47858 e30a72d29722b6e352ae4cb1f794e312 ""
+  "/Users/samaramiranda/Documents/ANADI/Trabalho_1/Trabalho_2/Conference-LaTeX-template_10-17-19/conference_101719.tex" 1781468051.53871 50040 25e163ed922ba9d7fe59ac9f80a5f9eb ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/adobe/courier/pcrb7t.tfm" 1136768653 960 4ab65358b8406f30ef5496c8c096d22b ""
@@ -115,8 +115,8 @@
   "/usr/local/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1773927683 3636770 54ba53e30f16ac7c6667f2af95fbfedd ""
   "/usr/local/texlive/2026/texmf.cnf" 1772409725 577 648cd9f92f9c0eac486f4c71c85cfbbe ""
   "IEEEtran.cls" 1781191460.82944 288304 b67b6fc6c2abb39f9b461923f5199343 ""
-  "conference_101719.aux" 1781461386.33416 8015 7a2e836e011786c1a2bbc4e7b903638b "pdflatex"
-  "conference_101719.tex" 1781461379.95766 47858 e30a72d29722b6e352ae4cb1f794e312 ""
+  "conference_101719.aux" 1781468057.52305 8015 f1e0a18541c012aa54d8a9186bc77ab5 "pdflatex"
+  "conference_101719.tex" 1781468051.53871 50040 25e163ed922ba9d7fe59ac9f80a5f9eb ""
   (generated)
   "conference_101719.aux"
   "conference_101719.log"
