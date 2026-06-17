@@ -1,0 +1,510 @@
+=== CELL 22 [markdown] ===
+---
+## 4.2. Regressão - Previsão de PFolga_PTD
+
+$$P_{Folga\_PTD} = Cap_{PTD\_kVA} \times 0.92 \times (1 - Util_{Decimal})$$
+
+Métrica central de viabilidade técnica para mobilidade elétrica, herdada do TP1.
+
+=== CELL 23 [markdown] ===
+### 4.2.1 - Diagrama de correlação
+
+=== CELL 24 [code] ===
+corr_matrix = df_clean[FEATURES + ['PFolga_PTD']].corr()
+fig, ax = plt.subplots(figsize=(16, 13))
+mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+sns.heatmap(corr_matrix, mask=mask, annot=True, fmt='.2f',
+            cmap='RdBu_r', center=0, vmin=-1, vmax=1,
+            square=True, linewidths=0.4, annot_kws={'size': 7}, ax=ax)
+ax.set_title('Matriz de Correlação de Pearson', fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_correlacao.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print('Correlações com PFolga_PTD (ordenadas):')
+corr_target = corr_matrix['PFolga_PTD'].drop('PFolga_PTD').sort_values(key=abs, ascending=False)
+for feat, val in corr_target.items():
+    print(f'  {feat:30s}: {val:+.4f}')
+
+=== CELL 25 [markdown] ===
+**Correlações com PFolga_PTD (ordenadas por força):**
+
+`Cap_PTD_kVA` é de longe a variável mais correlacionada com a folga de rede (r = 0.92), o que é matematicamente esperado dado que `PFolga_PTD = Cap_PTD_kVA × 0.92 × (1 − Util_Decimal)`.
+
+`Cap_per_Cliente` (r = 0.60) e `Tipo_Construtivo_enc` (r = 0.52) surgem em segundo plano - PTDs com maior capacidade por cliente e de tipologia construtiva específica tendem a ter mais folga disponível.
+
+`PContratada_per_Cliente` (r = 0.32) e `Pot_Contratada_kVA` (r = 0.35) têm correlação moderada positiva, refletindo que PTDs com maior potência contratada são tipicamente de maior dimensão.
+
+As variáveis de iluminação pública (`P_IP_Total`, `Rate_Ineficiencia`, `Ganho_LED_PTD`) apresentam correlações baixas com `PFolga_PTD` (entre 0.08 e 0.39), confirmando quantitativamente o resultado já discutido: **o impacto da transição LED na folga de rede a nível do PTD individual é marginal**.
+
+`LED_Ratio` tem correlação negativa com `PFolga_PTD` (r = −0.26) - concelhos com maior adoção LED tendem a ter PTDs ligeiramente mais carregados, possivelmente porque são zonas urbanas mais densas.
+
+**Multicolinearidade a ter em conta nos modelos:**
+
+Há clusters de variáveis fortemente correlacionadas entre si que podem causar instabilidade na regressão linear múltipla: `N_Luminarias`/`N_Lampadas`/`N_PTDs_Concelho` (r ≈ 0.95 entre si), `IP_Inef_per_PTD`/`Ganho_LED_PTD` (r = 1.00 - são praticamente a mesma variável), e `P_IP_Inef`/`Rate_Ineficiencia` (r = 0.80). Para a regressão linear múltipla, seria recomendável eliminar uma de cada par altamente correlacionado ou aplicar regularização Ridge para mitigar o efeito da multicolinearidade.
+
+=== CELL 26 [markdown] ===
+### 4.2.2 - Regressão Linear Simples (k-fold CV)
+
+=== CELL 27 [code] ===
+# Selecionar variável com maior correlação absoluta com PFolga_PTD
+# PVE_PTD tem valor constante (13.2)
+corr_safe = corr_matrix['PFolga_PTD'].drop('PFolga_PTD')
+corr_safe = corr_safe[corr_safe.index != 'PVE_PTD']
+best_feat = corr_safe.abs().idxmax()
+best_feat_idx = FEATURES.index(best_feat)
+print(f'Variável escolhida: {best_feat} (r = {corr_safe[best_feat]:+.4f})')
+print(f'Justificação: maior correlação absoluta com PFolga_PTD')
+
+X_simple = X[:, best_feat_idx].reshape(-1, 1)
+kf10 = KFold(n_splits=10, shuffle=True, random_state=SEED)
+
+mae_s, rmse_s = [], []
+for tr, te in kf10.split(X_simple):
+    m = LinearRegression()
+    m.fit(X_simple[tr], y_reg[tr])
+    p = m.predict(X_simple[te])
+    mae_s.append(mean_absolute_error(y_reg[te], p))
+    rmse_s.append(np.sqrt(mean_squared_error(y_reg[te], p)))
+
+lr_simple = LinearRegression().fit(X_simple, y_reg)
+
+print(f'\na) Função linear:')
+print(f'   PFolga_PTD = {lr_simple.coef_[0]:.6f} * {best_feat} + ({lr_simple.intercept_:.4f})')
+print(f'\nc) Métricas (10-fold CV):')
+print(f'   MAE:  {np.mean(mae_s):.4f} ± {np.std(mae_s):.4f} kVA')
+print(f'   RMSE: {np.mean(rmse_s):.4f} ± {np.std(rmse_s):.4f} kVA')
+
+=== CELL 28 [markdown] ===
+#### Interpretação — Regressão Linear Simples
+
+A variável escolhida foi **Cap_PTD_kVA** (r = 0.9159), a mais correlacionada com PFolga_PTD (excluindo PVE_PTD, constante). Esta relação forte é esperada porque a folga é definida em função da capacidade do PTD — quanto maior a capacidade instalada, maior a folga absoluta disponível, para níveis de utilização semelhantes.
+
+- A função linear resultante captura a tendência geral, mas o **elevado MAE** (comparado com os modelos múltiplos) reflecte que uma única variável não é suficiente para modelar adequadamente a folga — a `Util_Decimal` (excluída por leakage) e outras variáveis contribuem significativamente para a variância de `PFolga_PTD`.
+- O diagrama de dispersão evidencia a dispersão residual: para o mesmo valor de `Cap_PTD_kVA`, a folga varia muito em função do nível de utilização, confirmando a limitação do modelo simples.
+
+
+=== CELL 29 [code] ===
+# b) Diagrama de dispersão + reta
+rng = np.random.default_rng(SEED)
+idx_s = rng.choice(len(X_simple), size=min(4000, len(X_simple)), replace=False)
+fig, ax = plt.subplots(figsize=(9, 6))
+ax.scatter(X_simple[idx_s], y_reg[idx_s], alpha=0.25, s=8, color='steelblue', label='Dados (amostra)')
+x_line = np.linspace(X_simple.min(), X_simple.max(), 300).reshape(-1, 1)
+ax.plot(x_line, lr_simple.predict(x_line), 'r-', lw=2, label='Regressão Linear Simples')
+ax.set_xlabel(best_feat)
+ax.set_ylabel('PFolga_PTD (kVA)')
+ax.set_title(f'Regressão Linear Simples: PFolga_PTD ~ {best_feat}', fontweight='bold')
+ax.legend()
+plt.tight_layout()
+plt.savefig('fig_reg_simples.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 30 [markdown] ===
+### 4.2.3 - Modelos múltiplos com k-fold CV
+
+=== CELL 31 [code] ===
+def eval_reg(model, X_data, y_data, kf):
+    mae_l, rmse_l = [], []
+    for tr, te in kf.split(X_data):
+        model.fit(X_data[tr], y_data[tr])
+        p = model.predict(X_data[te])
+        mae_l.append(mean_absolute_error(y_data[te], p))
+        rmse_l.append(np.sqrt(mean_squared_error(y_data[te], p)))
+    return {'MAE_mean': np.mean(mae_l), 'MAE_std': np.std(mae_l),
+            'RMSE_mean': np.mean(rmse_l), 'RMSE_std': np.std(rmse_l),
+            'MAE_folds': mae_l}
+
+print('Funções definidas.')
+
+=== CELL 32 [code] ===
+# a) Regressão Linear Múltipla
+lr_multi = LinearRegression()
+res_lr = eval_reg(lr_multi, X_scaled, y_reg, kf10)
+lr_multi.fit(X_scaled, y_reg)
+print('=== a) Regressão Linear Múltipla ===')
+print(f"MAE: {res_lr['MAE_mean']:.4f} ± {res_lr['MAE_std']:.4f} | RMSE: {res_lr['RMSE_mean']:.4f}")
+
+coef_df = pd.DataFrame({'Feature': FEATURES, 'Coef': lr_multi.coef_})\
+           .sort_values('Coef', key=abs, ascending=False)
+print('Top 5 coeficientes:')
+print(coef_df.head(5).to_string(index=False))
+
+=== CELL 33 [markdown] ===
+Os coeficientes mais elevados (em valor absoluto, após standardização) pertencem a **Cap_PTD_kVA** (+209), **N_Lampadas** (−152) e **N_Luminarias** (+138). O domínio de **Cap_PTD_kVA** confirma a correlação observada em 4.2.1 (r=0.92). Os coeficientes de sinais opostos e magnitude semelhante em **N_Lampadas** e **N_Luminarias** são imediatamente suspeitos, estas duas variáveis têm correlação r=1.00 entre si (4.2.1), pelo que o modelo está a 'cancelá-las' uma à outra. É um sintoma claro de multicolinearidade, não de influência causal real.
+
+=== CELL 34 [code] ===
+# b) Árvore de Regressão – otimizar max_depth
+print('=== b) Árvore de Regressão – Otimização ===')
+depth_res = {}
+for d in [3, 5, 7, 10, 15, None]:
+    r = eval_reg(DecisionTreeRegressor(max_depth=d, random_state=SEED), X, y_reg, kf10)
+    depth_res[d] = r
+    print(f'  depth={str(d):4}: MAE={r["MAE_mean"]:.4f} ± {r["MAE_std"]:.4f}')
+
+best_d = min(depth_res, key=lambda d: depth_res[d]['MAE_mean'])
+res_dt = depth_res[best_d]
+dt_best = DecisionTreeRegressor(max_depth=best_d, random_state=SEED).fit(X, y_reg)
+print(f'-> Melhor depth: {best_d} | MAE: {res_dt["MAE_mean"]:.4f} | RMSE: {res_dt["RMSE_mean"]:.4f}')
+
+=== CELL 35 [markdown] ===
+#### Interpretação — Árvore de Regressão
+
+A profundidade ótima foi **d=10 (MAE=32.42 ± 0.33 kVA)**, confirmando o tradeoff bias-variance: profundidades menores (d=3 → MAE=45.42) subajustam, e profundidades excessivas (d=None → MAE=37.49) memorizam o treino mas generalizam pior.
+
+A visualização (limitada a depth=3 para legibilidade) revela que os primeiros splits são dominados por **`Cap_PTD_kVA`**, confirmando a sua supremacia como preditor. Nos ramos seguintes surgem variáveis como `N_Clientes` e `Cap_per_Cliente`, que capturam heterogeneidade dentro de cada classe de capacidade.
+
+
+=== CELL 36 [code] ===
+fig, ax = plt.subplots(figsize=(22, 9))
+plot_tree(dt_best, max_depth=3, feature_names=FEATURES,
+          filled=True, rounded=True, fontsize=7, ax=ax)
+ax.set_title(f'Árvore de Regressão (max_depth={best_d}, mostrar até depth=3)', fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_arvore_regressao.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 37 [code] ===
+# c) SVM – otimização do kernel
+print('=== c) SVM – Otimização de Kernel ===')
+svm_kr = {}
+for k in ['linear', 'rbf', 'poly']:
+    r = eval_reg(SVR(kernel=k, C=1.0), X_scaled, y_reg, kf10)
+    svm_kr[k] = r
+    print(f'  kernel={k:6}: MAE={r["MAE_mean"]:.4f} ± {r["MAE_std"]:.4f}')
+best_k_svm = min(svm_kr, key=lambda k: svm_kr[k]['MAE_mean'])
+res_svm = svm_kr[best_k_svm]
+print(f'-> Melhor kernel: {best_k_svm}')
+
+=== CELL 38 [markdown] ===
+#### Interpretação — SVM de Regressão
+
+O  SVM foi treinado num subsample de **n=6 000** (8.7% do dataset) por limitações 
+computacionais — o `SVR` tem complexidade O(n²)–O(n³). O subsample foi 
+selecionado aleatoriamente com seed fixo para reprodutibilidade.
+
+Foram testados 3 kernels com `C=1.0` fixo:
+
+| Kernel | MAE | 
+|--------|-----|
+| **linear** | **33.38 ± 1.16** |
+| rbf | 68.42 ± 4.60 |
+| poly | 78.25 ± 4.11 |
+
+O **kernel linear** é claramente o melhor (MAE=33.38), praticamente equivalente 
+à Regressão Linear Múltipla (MAE=33.87) — sinal de que a relação entre as 
+features e `PFolga_PTD` é fundamentalmente linear, dominada pela forte 
+correlação de `Cap_PTD_kVA` com o target (r=0.92, confirmado em 4.2.1).
+
+O desempenho fraco de `rbf` e `poly` (MAE quase duplo) é coerente com este 
+diagnóstico: kernels não-lineares só se justificam quando há estrutura 
+não-linear no problema; aqui, introduzem variância sem reduzir o viés. 
+Adicionalmente, os hiperparâmetros `C` e `gamma` foram mantidos no default 
+(o enunciado pede só otimização do kernel) — tuning conjunto poderia 
+estreitar o gap, mas o resultado qualitativo (linear domina) provavelmente 
+mantém-se.
+
+
+=== CELL 39 [code] ===
+# d) Rede Neuronal – 3 configurações estruturadas com k-fold CV
+print('=== d) Rede Neuronal – 3 Configurações (k-fold CV) ===')
+
+# (1) Shallow: menos parâmetros, sem regularização
+# (2) Medium: profundidade intermédia, dropout
+# (3) Deep+L2: mais profundo, L2 + dropout, lr mais conservadora
+nn_cfgs = [
+    {'name': 'Config1_Shallow',  'units': [64, 32],            'drop': 0.0, 'l2': 0.0,  'lr': 1e-3},
+    {'name': 'Config2_Medium',   'units': [128, 64, 32],       'drop': 0.2, 'l2': 0.0,  'lr': 1e-3},
+    {'name': 'Config3_Deep_L2',  'units': [256, 128, 64, 32],  'drop': 0.3, 'l2': 1e-4, 'lr': 5e-4},
+]
+
+hist_nn, nn_res = {}, {}
+
+for cfg in nn_cfgs:
+    fold_mae, fold_rmse = [], []
+    last_history = None
+    last_epochs = 0
+
+    for tr_idx, te_idx in kf10.split(X_scaled):
+        Xtr, Xte = X_scaled[tr_idx], X_scaled[te_idx]
+        ytr, yte = y_reg[tr_idx], y_reg[te_idx]
+
+        # ✅ EarlyStopping criado DENTRO do loop — estado fresco por fold
+        es = EarlyStopping(monitor='val_loss', patience=20,
+                           restore_best_weights=True, verbose=0)
+
+        tf.random.set_seed(SEED)
+        inp = keras.Input(shape=(X_scaled.shape[1],))
+        x = inp
+        for u in cfg['units']:
+            x = layers.Dense(
+                u, activation='relu',
+                kernel_regularizer=regularizers.l2(cfg['l2']) if cfg['l2'] else None
+            )(x)
+            if cfg['drop']:
+                x = layers.Dropout(cfg['drop'])(x)
+        m = keras.Model(inp, layers.Dense(1)(x))
+        m.compile(optimizer=keras.optimizers.Adam(cfg['lr']),
+                  loss='mse', metrics=['mae'])
+
+        h = m.fit(Xtr, ytr, validation_data=(Xte, yte),
+                  epochs=150, batch_size=256, callbacks=[es], verbose=0)
+        last_history = h.history
+        last_epochs = len(h.history['loss'])
+
+        p = m.predict(Xte, verbose=0).flatten()
+        fold_mae.append(mean_absolute_error(yte, p))
+        fold_rmse.append(np.sqrt(mean_squared_error(yte, p)))
+
+    hist_nn[cfg['name']] = last_history
+    nn_res[cfg['name']] = {
+        'MAE_mean':  np.mean(fold_mae),  'MAE_std':  np.std(fold_mae),
+        'RMSE_mean': np.mean(fold_rmse), 'RMSE_std': np.std(fold_rmse),
+        'epochs_last': last_epochs,
+        'MAE_folds': fold_mae,
+    }
+    r = nn_res[cfg['name']]
+    print(f"  {cfg['name']:25}: "
+          f"MAE={r['MAE_mean']:.4f} ± {r['MAE_std']:.4f} | "
+          f"RMSE={r['RMSE_mean']:.4f} ± {r['RMSE_std']:.4f} | "
+          f"epochs(último fold)={r['epochs_last']}")
+
+best_nn = min(nn_res, key=lambda k: nn_res[k]['MAE_mean'])
+print(f'-> Melhor NN: {best_nn}')
+
+=== CELL 40 [markdown] ===
+#### Interpretação — Redes Neuronais (Regressão)
+
+A NN é avaliada por **10-fold CV** (consistente com a regressão linear, árvore e SVM 
+de 4.2.3). Como o Keras não tem suporte direto a `cross_val_score`, cada fold 
+implica construir e treinar uma rede do zero — evita contaminação de pesos entre 
+folds.
+
+| Config | Camadas | Neurónios | Regularização | Learning Rate |
+|---|---|---|---|---|
+| Shallow | 2 | [64, 32] | Nenhuma | 1e-3 |
+| Medium | 3 | [128, 64, 32] | Dropout 20% | 1e-3 |
+| Deep+L2 | 4 | [256, 128, 64, 32] | Dropout 30% + L2 (1e-4) | 5e-4 |
+
+**Decisões de design:**
+
+- **Early stopping com `patience=20`** (em vez de 10): testes preliminares mostraram 
+  que `patience=10` interrompia o treino das configs com dropout/L2 ao fim de ~10 
+  épocas — antes da convergência genuína, devido às oscilações da `val_loss` 
+  induzidas pelo dropout. `patience=20` dá margem suficiente para a rede superar 
+  estas oscilações.
+
+- **Learning rate da Config3 reduzida para 5e-4**: redes profundas com L2 têm 
+  superfícies de loss mais complexas — passos de gradiente menores garantem 
+  convergência mais estável e evitam overshooting.
+
+A melhor configuração é seleccionada automaticamente por menor MAE médio 
+nos 10 folds.
+
+=== CELL 41 [code] ===
+# (2) Curvas de loss + (3) discussão learning rate e early stopping
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+for i, cfg in enumerate(nn_cfgs):
+    h = hist_nn[cfg['name']]
+    axes[i].plot(h['loss'], color='steelblue', label='Train')
+    axes[i].plot(h['val_loss'], color='coral', label='Val')
+    axes[i].set_title(cfg['name'].replace('_',' '), fontweight='bold', fontsize=9)
+    axes[i].set_xlabel('Época')
+    axes[i].set_ylabel('MSE Loss')
+    axes[i].legend(fontsize=8)
+plt.suptitle('Curvas de Loss – Redes Neuronais (Regressão)\n'
+             'Config3 usa lr=5e-4 + L2 + dropout; early stopping interrompe ao atingir mínimo de val_loss', fontsize=10)
+plt.tight_layout()
+plt.savefig('fig_nn_loss_reg.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 42 [markdown] ===
+#### Interpretação das Curvas de Loss — NN Regressão
+
+As três curvas exibem o mesmo padrão geral: descida rápida nas primeiras 
+épocas, seguida de plateau em ~5 000 (train) e ~3 000 (val) MSE. **Não há 
+sinais de overfitting** em nenhuma config — val_loss nunca cresce.
+
+**Config1 (Shallow, 132 épocas):** convergência mais lenta mas continuada — 
+sem regularização, a rede continua a ajustar pesos ao longo do treino até o 
+early stopping intervir. Train e val descem em paralelo com val < train por 
+uma margem ~2 000, consistente com a variabilidade do split.
+
+**Config2 (Medium, 54 épocas):** convergência rápida (estável às ~10 épocas), 
+val < train por ~2 000. O dropout (20%) desativa neurónios no treino mas não 
+na validação — efeito que **explica val < train** nesta config: a loss de 
+treino é artificialmente penalizada pelos neurónios desligados, enquanto a 
+de validação não. Early stopping intervém às 54 épocas após `patience=20` 
+sem melhoria.
+
+**Config3 (Deep+L2, 50 épocas):** forma idêntica à Medium. O termo L2 
+acrescenta penalização aos pesos na loss de treino (não na de val), 
+contribuindo também para o gap. A learning rate reduzida (5e-4 vs 1e-3) 
+garante descida estável apesar da profundidade adicional, sem sinais de 
+oscilação ou overshooting.
+
+**Conclusão:** os gráficos confirmam que as três configs convergem para um 
+plateau equivalente (~3 000 val MSE), coerente com o empate técnico nos 
+MAEs (31.17 → 31.70). O limite informativo das features é o fator 
+condicionante, não a capacidade da rede.
+
+=== CELL 43 [markdown] ===
+### 4.2.4 - Comparação e variáveis mais relevantes
+
+=== CELL 44 [code] ===
+r_nn = nn_res[best_nn]
+results_reg = pd.DataFrame([
+    {'Modelo': 'Reg. Linear Simples',  'MAE': np.mean(mae_s),     'MAE_std': np.std(mae_s),    'RMSE': np.mean(rmse_s)},
+    {'Modelo': 'Reg. Linear Múltipla', 'MAE': res_lr['MAE_mean'],  'MAE_std': res_lr['MAE_std'], 'RMSE': res_lr['RMSE_mean']},
+    {'Modelo': f'Árvore (d={best_d})', 'MAE': res_dt['MAE_mean'],  'MAE_std': res_dt['MAE_std'], 'RMSE': res_dt['RMSE_mean']},
+    {'Modelo': f'SVM ({best_k_svm})',  'MAE': res_svm['MAE_mean'], 'MAE_std': res_svm['MAE_std'],'RMSE': res_svm['RMSE_mean']},
+    {'Modelo': f'NN ({best_nn})',  'MAE': r_nn['MAE_mean'],  'MAE_std': r_nn['MAE_std'],  'RMSE': r_nn['RMSE_mean']},
+]).sort_values('MAE').reset_index(drop=True)
+
+print('=== Comparação de Modelos de Regressão (ordenado por MAE) ===')
+print(results_reg.to_string(index=False))
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+clrs = ['#2196F3','#4CAF50','#FF9800','#9C27B0','#F44336']
+axes[0].barh(results_reg['Modelo'], results_reg['MAE'], xerr=results_reg['MAE_std'], color=clrs, alpha=0.85)
+axes[0].set_title('MAE por Modelo (kVA)', fontweight='bold')
+axes[1].barh(results_reg['Modelo'], results_reg['RMSE'], color=clrs, alpha=0.85)
+axes[1].set_title('RMSE por Modelo (kVA)', fontweight='bold')
+plt.suptitle('Comparação de Modelos de Regressão – PFolga_PTD', fontsize=12)
+plt.tight_layout()
+plt.savefig('fig_comparacao_regressao.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# Importância de variáveis
+fi = pd.DataFrame({'Feature': FEATURES, 'Importance': dt_best.feature_importances_})\
+      .sort_values('Importance', ascending=True)
+fig, ax = plt.subplots(figsize=(9, 7))
+ax.barh(fi['Feature'], fi['Importance'], color='steelblue', alpha=0.85)
+ax.set_title('Importância de Features – Árvore de Regressão', fontweight='bold')
+plt.tight_layout()
+plt.savefig('fig_feat_imp_reg.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+=== CELL 45 [markdown] ===
+#### Interpretação — Comparação de Modelos de Regressão
+
+A tabela ordena os modelos por MAE crescente (melhor primeiro). Algumas observações:
+
+- O **MAE em kVA** deve ser interpretado no contexto da distribuição de `PFolga_PTD` (mediana ~77 kVA): um MAE de 30–50 kVA representa um erro relativo significativo para PTDs de pequena dimensão, mas aceitável para PTDs de grande capacidade.
+- Modelos não-lineares (Árvore, NN) tendem a superar a regressão linear quando a relação input-output contém interacções entre variáveis, como é o caso aqui.
+- A **Regressão Linear Simples** serve como baseline, o seu MAE elevado justifica a necessidade de modelos mais complexos.
+- As variáveis mais relevantes identificadas (tipicamente `Cap_PTD_kVA`, `Cap_per_Cliente`, `Tipo_Construtivo_enc`) são consistentes com a análise de correlação da secção 4.2.1.
+
+
+=== CELL 46 [markdown] ===
+### 4.2.5 - Curvas de Aprendizagem
+
+=== CELL 47 [code] ===
+# 4.2.5 - Curvas de Aprendizagem dos 2 Melhores Modelos de Regressão
+# A função plot_lc usa neg_mean_absolute_error; negamos para obter MAE positivo.
+def plot_lc(model, Xd, yd, title, ax, scoring='neg_mean_absolute_error'):
+    ts, tsc, vsc = learning_curve(
+        model, Xd, yd,
+        train_sizes=np.linspace(0.1, 1.0, 10), cv=5,
+        scoring=scoring, n_jobs=-1)
+    # neg_mean_absolute_error -> valores negativos; negamos para MAE positivo
+    if scoring == 'neg_mean_absolute_error':
+        tm  = (-tsc).mean(1)
+        vm  = (-vsc).mean(1)
+        ts_std = tsc.std(1)
+        vs_std = vsc.std(1)
+        ylabel = 'MAE (kVA)'
+    else:  # accuracy
+        tm  = tsc.mean(1)
+        vm  = vsc.mean(1)
+        ts_std = tsc.std(1)
+        vs_std = vsc.std(1)
+        ylabel = 'Accuracy'
+    ax.plot(ts, tm, 'o-', color='steelblue', label='Treino')
+    ax.plot(ts, vm, 'o-', color='coral',    label='Validação')
+    ax.fill_between(ts, tm - ts_std, tm + ts_std, alpha=0.1, color='steelblue')
+    ax.fill_between(ts, vm - vs_std, vm + vs_std, alpha=0.1, color='coral')
+    ax.set_title(title, fontweight='bold', fontsize=9)
+    ax.set_xlabel('Tamanho do treino')
+    ax.set_ylabel(ylabel)
+    ax.legend(fontsize=8)
+
+# Seleccionar dinamicamente os 2 modelos com menor MAE médio
+reg_results = {
+    f'Árvore (d={best_d})':       (DecisionTreeRegressor(max_depth=best_d, random_state=SEED), X,        res_dt['MAE_mean']),
+    'Reg. Linear Múltipla':       (LinearRegression(),                                         X_scaled,  res_lr['MAE_mean']),
+    f'SVM ({best_k_svm})':        (SVR(kernel=best_k_svm, C=1.0),                              X_scaled,        res_svm['MAE_mean']),
+    f'NN ({best_nn})':            (None,                                                        None,      nn_res[best_nn]['MAE_mean']),
+}
+# Excluir NN (não tem modelo sklearn para learning_curve)
+reg_sklearn = {k: v for k, v in reg_results.items() if v[0] is not None}
+sorted_reg = sorted(reg_sklearn.items(), key=lambda x: x[1][2])
+top2_reg = sorted_reg[:2]
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+for i, (name, (model, Xdata, _)) in enumerate(top2_reg):
+    plot_lc(model, Xdata, y_reg, name, axes[i], scoring='neg_mean_absolute_error')
+plt.suptitle('Curvas de Aprendizagem – 2 Melhores Modelos de Regressão', fontsize=12)
+plt.tight_layout()
+plt.savefig('fig_lc_reg.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Interpretação: treino ≈ validação -> eficiente | validação >> treino -> overfitting | ambas altas -> underfitting')
+
+
+=== CELL 48 [markdown] ===
+#### Interpretação das Curvas de Aprendizagem — Regressão
+
+As curvas de aprendizagem mostram o MAE de treino e de validação em função do tamanho do conjunto de treino:
+
+- **Convergência treino ≈ validação** com valores baixos: treino eficiente, modelo generaliza bem.
+- **Validação >> Treino** (gap persistente): **overfitting** — o modelo memoriza os dados de treino. Possíveis soluções: regularização (dropout, L2, pruning da árvore), mais dados, redução de complexidade.
+- **Ambas as curvas com MAE elevado** e próximas entre si: **underfitting** — o modelo é demasiado simples para capturar os padrões dos dados. Possível solução: aumentar complexidade.
+- **Plateau com poucos dados de treino**: o modelo não beneficia de mais dados — pode indicar que as features disponíveis atingiram o seu limite informativo.
+
+
+=== CELL 49 [markdown] ===
+### 4.2.6 - Testes Estatísticos (α = 5%)
+
+=== CELL 50 [code] ===
+# 4.2.6 - Teste Estatístico entre os 2 Melhores Modelos de Regressão (α=5%)
+# Seleccionar os 2 modelos sklearn com menor MAE médio (mesmos da 4.2.5)
+print(f'Comparando: {top2_reg[0][0]}  vs  {top2_reg[1][0]}')
+
+# Obter folds de cada um
+folds_map = {
+    f'Árvore (d={best_d})': res_dt['MAE_folds'],
+    'Reg. Linear Múltipla': res_lr['MAE_folds'],
+    f'SVM ({best_k_svm})':  res_svm['MAE_folds'],
+}
+mae1 = np.array(folds_map[top2_reg[0][0]])
+mae2 = np.array(folds_map[top2_reg[1][0]])
+diffs = mae1 - mae2
+
+_, p_sw = shapiro(diffs)
+print(f'Shapiro-Wilk (diferenças MAE): p={p_sw:.4f}')
+if p_sw > 0.05:
+    stat, p = ttest_rel(mae1, mae2)
+    tnm = 't-test pareado'
+else:
+    stat, p = wilcoxon(mae1, mae2)
+    tnm = 'Wilcoxon signed-rank'
+
+print(f'{tnm}: stat={stat:.4f}, p={p:.4f}')
+if p < 0.05:
+    winner = top2_reg[0][0] if mae1.mean() < mae2.mean() else top2_reg[1][0]
+    print(f'-> Diferença significativa (p<0.05). Melhor: {winner}')
+else:
+    print('-> Sem diferença significativa (p>=0.05).')
+
+
+=== CELL 51 [markdown] ===
+#### Interpretação — Teste Estatístico (Regressão)
+
+O procedimento segue a lógica:
+1. **Shapiro-Wilk** nas diferenças de MAE entre os 2 melhores modelos: testa a normalidade das diferenças.
+2. Se p > 0,05 (diferenças normais) → **t-test pareado**; caso contrário → **Wilcoxon signed-rank** (não-paramétrico).
+3. Se p < 0,05 no teste final: a diferença de desempenho é **estatisticamente significativa** ao nível de 5% → identificar o modelo superior.
+
+Os testes são **pareados** porque os folds de validação cruzada são os mesmos para ambos os modelos, reduzindo a variabilidade e aumentando o poder estatístico do teste.
+
+

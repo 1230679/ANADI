@@ -1,46 +1,76 @@
 \relax 
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introdução}{1}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {II}Objetivos}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {III}Metodologia}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-}1}Random Forest}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Dataset}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Análise Exploratória dos Dados}{2}{}\protected@file@percent }
-\newlabel{fig:bimodal}{{1a}{2}{}{subfigure.1.1}{}}
-\newlabel{sub@fig:bimodal}{{a}{2}{}{subfigure.1.1}{}}
-\newlabel{fig:utilizRede}{{1b}{2}{}{subfigure.1.2}{}}
-\newlabel{sub@fig:utilizRede}{{b}{2}{}{subfigure.1.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Distribuição Bimodal da modernização (a) e da Ocupação dos PTDs (b), justificando a discretização em três classes.}}{2}{}\protected@file@percent }
+\citation{b1}
+\citation{b1,b2}
+\citation{b2}
+\citation{b1}
+\citation{b1}
+\citation{b1,b3}
+\citation{b1,b2,b3}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Estado da Arte}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Metodologia e Dados}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Dataset e Continuidade com o TP1}{2}{}\protected@file@percent }
+\newlabel{eq:pfolga_ptd}{{1}{2}{}{equation.1}{}}
+\newlabel{eq:pve_ptd}{{2}{2}{}{equation.2}{}}
+\newlabel{eq:d_ptd}{{3}{2}{}{equation.3}{}}
+\newlabel{eq:dled_ptd}{{4}{2}{}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Análise Exploratória e Decisões de Pré-processamento}{2}{}\protected@file@percent }
+\newlabel{fig:bimodal}{{1a}{3}{}{subfigure.1.1}{}}
+\newlabel{sub@fig:bimodal}{{a}{3}{}{subfigure.1.1}{}}
+\newlabel{fig:utilizRede}{{1b}{3}{}{subfigure.1.2}{}}
+\newlabel{sub@fig:utilizRede}{{b}{3}{}{subfigure.1.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Distribuição Bimodal da modernização (a) e da Ocupação dos PTDs (b), justificando a discretização em três classes.}}{3}{}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:eda_distributions}{{1}{2}{}{figure.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Identificação de \textit  {outliers} e dispersão dos dados nas variáveis principais da infraestrutura.}}{2}{}\protected@file@percent }
-\newlabel{fig:outliers}{{2}{2}{}{figure.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Pré-Processamento}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Construção da Variável Alvo}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Balanceamento das Classes}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Modelos de Classificação}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-F}1}K-Nearest Neighbors (KNN)}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-F}2}Support Vector Machine (SVM)}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-F}3}Árvores de Decisão}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Validação Experimental}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Resultados e Discussão}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Comparação Global dos Modelos}{3}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Desempenho global dos modelos após validação (com Random Forest)}}{3}{}\protected@file@percent }
-\newlabel{tab:classificacao_global}{{I}{3}{}{table.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Otimização do hiperparâmetro $k$ no modelo KNN. A escolha do valor ideal é crucial para equilibrar o viés e a variância do modelo.}}{4}{}\protected@file@percent }
-\newlabel{fig:knn_k}{{3}{4}{}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Desempenho por Classe}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Impacto do Balanceamento com SMOTE}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Matriz de Confusão do modelo Random Forest, demonstrando o desafio em separar as classes adjacentes `baixo` e `medio`.}}{4}{}\protected@file@percent }
-\newlabel{fig:confusion_matrix}{{4}{4}{}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Importância das Variáveis}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Curvas de Aprendizagem}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Importância das características (Feature Importance) extraída do modelo de classificação baseado em árvores, destacando a relevância da capacidade instalada por cliente.}}{5}{}\protected@file@percent }
-\newlabel{fig:feat_imp_clf}{{5}{5}{}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Curvas de Aprendizagem. É visível que as Árvores simples sofrem de um rápido \textit  {overfitting} (desvio entre treino e validação), enquanto modelos otimizados estabilizam precocemente.}}{5}{}\protected@file@percent }
-\newlabel{fig:learning_curves}{{6}{5}{}{figure.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Curvas de Aprendizagem dos modelos de classificação. A convergência entre as linhas de treino e validação permite diagnosticar o equilíbrio entre \textit  {overfitting} e \textit  {underfitting}.}}{5}{}\protected@file@percent }
-\newlabel{fig:learning_curves_clf}{{7}{5}{}{figure.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {V}Limitações e Trabalho Futuro}{5}{}\protected@file@percent }
+\newlabel{fig:eda_distributions}{{1}{3}{}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Identificação de \textit  {outliers} e dispersão dos dados nas variáveis principais da infraestrutura.}}{3}{}\protected@file@percent }
+\newlabel{fig:outliers}{{2}{3}{}{figure.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Decisões de Pré-processamento}}{3}{}\protected@file@percent }
+\newlabel{tab:preproc}{{I}{3}{}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Variável de Classificação: \texttt  {utilizRede}}{3}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Definição da Variável \texttt  {utilizRede}}}{3}{}\protected@file@percent }
+\newlabel{tab:classes}{{II}{3}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Validação Cruzada e Métricas de Avaliação}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Parametrização dos Modelos de Regressão}{3}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Configurações da Rede Neuronal --- Regressão}}{4}{}\protected@file@percent }
+\newlabel{tab:nn_reg}{{III}{4}{}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Parametrização dos Modelos de Classificação}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-G}}Tratamento do Desequilíbrio de Classes e SMOTE}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Resultados e Discuss\~ao}{4}{}\protected@file@percent }
+\newlabel{sec:resultados}{{V}{4}{}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Resultados da Regressão para Folga de Rede (\texttt  {PFolga\_PTD})}{4}{}\protected@file@percent }
+\newlabel{subsec:resultados_regressao}{{\mbox  {V-A}}{4}{}{subsection.5.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Curvas de Aprendizagem para o modelo de Árvore de Regressão. A estabilização do erro de validação (MSE) indica uma parametrização adequada face ao volume de dados de treino.}}{5}{}\protected@file@percent }
+\newlabel{fig:learning_curves_reg}{{3}{5}{}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Compara\c {c}\~ao Global dos Modelos}{5}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Desempenho Global dos Modelos de Classifica\c {c}\~ao  (10-\textit  {fold} CV, m\'etricas \textit  {weighted})}}{5}{}\protected@file@percent }
+\newlabel{tab:classificacao_global}{{IV}{5}{}{table.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Otimiza\c {c}\~ao do hiperpar\^ametro~$K$ no KNN. O valor \'otimo $K=20$ maximiza a \textit  {Accuracy} m\'edia nos 10~\textit  {folds}; valores superiores introduzem vi\'es progressivo.}}{5}{}\protected@file@percent }
+\newlabel{fig:knn_k}{{4}{5}{}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Teste Estat\'istico entre os Dois Melhores Modelos}{5}{}\protected@file@percent }
+\newlabel{subsec:teste_estat}{{\mbox  {V-C}}{5}{}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}An\'alise por Classe -- Matriz de Confus\~ao}{5}{}\protected@file@percent }
+\newlabel{subsec:por_classe}{{\mbox  {V-D}}{5}{}{subsection.5.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces M\'etricas por Classe -- Todos os Modelos}}{5}{}\protected@file@percent }
+\newlabel{tab:por_classe}{{V}{5}{}{table.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Matriz de Confus\~ao da \'Arvore de Decis\~ao ($d=7$), obtida por \textit  {cross\_val\_predict} com 10~\textit  {folds}. A classe \textit  {m\'edio} acumula o maior n\'umero de erros, com 1\,473 PTDs erroneamente atribuídos \`a classe \textit  {baixo}.}}{6}{}\protected@file@percent }
+\newlabel{fig:confusion_matrix}{{5}{6}{}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Import\^ancia das Vari\'aveis}{6}{}\protected@file@percent }
+\newlabel{subsec:feat_imp}{{\mbox  {V-E}}{6}{}{subsection.5.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Import\^ancia das vari\'aveis na \'Arvore de Decis\~ao (\textit  {Gini impurity}). \texttt  {Cap\_per\_Cliente} e \texttt  {PContratada\_per\_Cliente} concentram $\approx $89\% da import\^ancia total; todas as vari\'aveis de Ilumina\c {c}\~ao P\'ublica apresentam contributo residual.}}{6}{}\protected@file@percent }
+\newlabel{fig:feat_imp_clf}{{6}{6}{}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Curvas de Aprendizagem}{6}{}\protected@file@percent }
+\newlabel{subsec:lc}{{\mbox  {V-F}}{6}{}{subsection.5.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Curvas de Aprendizagem dos modelos SVM~(RBF) e KNN~($k=20$). O SVM mostra convers\~ao eficiente sem \textit  {overfitting} persistente; o KNN atinge plateau prematuro e mant\'em gap treino/valida\c {c}\~ao est\'avel, indicando limita\c {c}\~ao estrutural do algoritmo.}}{6}{}\protected@file@percent }
+\newlabel{fig:learning_curves_clf}{{7}{6}{}{figure.7}{}}
+\citation{b6}
+\citation{b7}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Curva de Perda (Loss) do treino da Rede Neuronal para classificação ao longo das épocas, evidenciando uma convergência suave propiciada pelas técnicas de regularização.}}{7}{}\protected@file@percent }
+\newlabel{fig:nn_loss_clf}{{8}{7}{}{figure.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Limita\c {c}\~oes e Trabalho Futuro}{7}{}\protected@file@percent }
+\newlabel{sec:limitacoes}{{VI}{7}{}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Limita\c {c}\~oes}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Trabalho Futuro}{7}{}\protected@file@percent }
 \bibcite{b1}{1}
 \bibcite{b2}{2}
 \bibcite{b3}{3}
@@ -49,6 +79,6 @@
 \bibcite{b6}{6}
 \bibcite{b7}{7}
 \bibcite{b8}{8}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusão}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{6}{}\protected@file@percent }
-\gdef \@abspage@last{6}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclus\~ao}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{8}{}\protected@file@percent }
+\gdef \@abspage@last{8}
